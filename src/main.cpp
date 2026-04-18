@@ -1,7 +1,8 @@
-#include "appcontrol.h"
+#include "app.h"
 
 int main() {
-    AppControl app;
+    App app;
     app.iniciar();
     return 0;
 }
+
