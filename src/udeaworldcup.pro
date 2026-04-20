@@ -9,11 +9,13 @@ SOURCES += \
     torneo.cpp \
     repositorio.cpp \
     simulador.cpp \
-    medidor.cpp
+    medidor.cpp \
+    equipo.cpp
 
 HEADERS += \
     app.h \
     torneo.h \
     repositorio.h \
     simulador.h \
-    medidor.h
+    medidor.h \
+    equipo.h
