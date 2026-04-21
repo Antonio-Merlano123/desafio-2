@@ -10,7 +10,8 @@ SOURCES += \
     repositorio.cpp \
     simulador.cpp \
     medidor.cpp \
-    equipo.cpp
+    equipo.cpp \
+    jugador.cpp
 
 HEADERS += \
     app.h \
@@ -18,4 +19,5 @@ HEADERS += \
     repositorio.h \
     simulador.h \
     medidor.h \
-    equipo.h
+    equipo.h \
+    jugador.h
