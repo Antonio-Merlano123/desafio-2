@@ -12,7 +12,9 @@ SOURCES += \
     medidor.cpp \
     equipo.cpp \
     jugador.cpp \
-    partido.cpp
+    partido.cpp \
+    grupo.cpp \
+    tablaposiciones.cpp
 
 HEADERS += \
     app.h \
@@ -22,4 +24,6 @@ HEADERS += \
     medidor.h \
     equipo.h \
     jugador.h \
-    partido.h
+    partido.h \
+    grupo.h \
+    tablaposiciones.h
