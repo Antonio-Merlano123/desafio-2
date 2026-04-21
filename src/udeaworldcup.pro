@@ -26,4 +26,5 @@ HEADERS += \
     jugador.h \
     partido.h \
     grupo.h \
-    tablaposiciones.h
+    tablaposiciones.h \
+    arreglodinamico.h
