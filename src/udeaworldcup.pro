@@ -14,7 +14,8 @@ SOURCES += \
     jugador.cpp \
     partido.cpp \
     grupo.cpp \
-    tablaposiciones.cpp
+    tablaposiciones.cpp \
+    arreglodinamico.cpp
 
 HEADERS += \
     app.h \
