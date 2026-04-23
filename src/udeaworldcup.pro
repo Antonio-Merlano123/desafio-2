@@ -15,7 +15,8 @@ SOURCES += \
     partido.cpp \
     grupo.cpp \
     tablaposiciones.cpp \
-    arreglodinamico.cpp
+    arreglodinamico.cpp \
+    listasimple.cpp
 
 HEADERS += \
     app.h \
