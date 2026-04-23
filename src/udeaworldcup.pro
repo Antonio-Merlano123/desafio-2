@@ -16,7 +16,8 @@ SOURCES += \
     grupo.cpp \
     tablaposiciones.cpp \
     arreglodinamico.cpp \
-    listasimple.cpp
+    listasimple.cpp \
+    matrizdinamica.cpp
 
 HEADERS += \
     app.h \
