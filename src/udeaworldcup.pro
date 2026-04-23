@@ -28,4 +28,5 @@ HEADERS += \
     partido.h \
     grupo.h \
     tablaposiciones.h \
-    arreglodinamico.h
+    arreglodinamico.h \
+    listasimple.h
