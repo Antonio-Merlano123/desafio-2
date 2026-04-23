@@ -19,21 +19,15 @@ string grupo::getnombre() const {
 }
 
 bool grupo::agregarequipo(string nombreequipo) {
-    bool hayespacio = true;
-
     if (cantidad >= 4) {
-        hayespacio = false;
-    }
-
-    if (hayespacio == false) {
         return false;
+    } else {
+        int posactual = cantidad;
+        equipos[posactual] = nombreequipo;
+        cantidad = posactual + 1;
+
+        return true;
     }
-
-    int posactual = cantidad;
-    equipos[posactual] = nombreequipo;
-    cantidad = posactual + 1;
-
-    return true;
 }
 
 string grupo::getequipo(int pos) const {
@@ -60,11 +54,9 @@ int grupo::getcantidad() const {
 }
 
 bool grupo::estalleno() const {
-    bool lleno = false;
-
     if (cantidad == 4) {
-        lleno = true;
+        return true;
+    } else {
+        return false;
     }
-
-    return lleno;
 }

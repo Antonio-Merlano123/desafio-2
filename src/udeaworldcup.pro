@@ -30,4 +30,5 @@ HEADERS += \
     grupo.h \
     tablaposiciones.h \
     arreglodinamico.h \
-    listasimple.h
+    listasimple.h \
+    matrizdinamica.h

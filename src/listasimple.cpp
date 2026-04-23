@@ -37,7 +37,11 @@ void listasimple::agregar(string valor) {
 }
 
 string listasimple::obtener(int pos) const {
-    if (pos < 0 || pos >= cantidad) {
+    if (pos < 0) {
+        return "";
+    }
+
+    if (pos >= cantidad) {
         return "";
     }
 
@@ -53,11 +57,17 @@ string listasimple::obtener(int pos) const {
 }
 
 void listasimple::eliminar(int pos) {
+    bool posvalida = true;
+
     if (pos < 0) {
-        return;
+        posvalida = false;
+    } else {
+        if (pos >= cantidad) {
+            posvalida = false;
+        }
     }
 
-    if (pos >= cantidad) {
+    if (posvalida == false) {
         return;
     }
 
@@ -67,21 +77,21 @@ void listasimple::eliminar(int pos) {
         delete viejo;
         cantidad = cantidad - 1;
         return;
+    } else {
+        nodo* anterior = cabeza;
+        int paso = 0;
+
+        // avanzo hasta el nodo justo antes del que toca borrar
+        while (paso < pos - 1) {
+            anterior = anterior->siguiente;
+            paso = paso + 1;
+        }
+
+        nodo* borrar = anterior->siguiente;
+        anterior->siguiente = borrar->siguiente;
+        delete borrar;
+        cantidad = cantidad - 1;
     }
-
-    nodo* anterior = cabeza;
-    int paso = 0;
-
-    // avanzo hasta el nodo justo antes del que toca borrar
-    while (paso < pos - 1) {
-        anterior = anterior->siguiente;
-        paso = paso + 1;
-    }
-
-    nodo* borrar = anterior->siguiente;
-    anterior->siguiente = borrar->siguiente;
-    delete borrar;
-    cantidad = cantidad - 1;
 }
 
 bool listasimple::estavacia() const {

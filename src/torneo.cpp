@@ -62,18 +62,12 @@ void Torneo::iniciargrupos(int cantidad) {
 }
 
 bool Torneo::registrargrupobase(int indice, string nombregrupo) {
-    bool indicevalido = true;
-
     if (indice < 0) {
-        indicevalido = false;
-    }
-
-    if (indice >= cantidadgrupos) {
-        indicevalido = false;
-    }
-
-    if (indicevalido == false) {
         return false;
+    } else {
+        if (indice >= cantidadgrupos) {
+            return false;
+        }
     }
 
     grupos[indice].setnombre(nombregrupo);
@@ -81,17 +75,11 @@ bool Torneo::registrargrupobase(int indice, string nombregrupo) {
 }
 
 bool Torneo::cargarequipotabla(int fila, string nombreequipo) {
-    bool filavalida = true;
-
     if (fila < 0) {
-        filavalida = false;
+        return false;
     }
 
     if (fila >= cantidadfilastabla) {
-        filavalida = false;
-    }
-
-    if (filavalida == false) {
         return false;
     }
 
