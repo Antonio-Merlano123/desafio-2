@@ -12,7 +12,7 @@ static int partirlinea(string linea, string campos[], int maxcampos) {
     for (int i = 0; i < int(linea.size()); i = i + 1) {
         char c = linea[i];
 
-        if (c == ',') {
+        if (c == ';') {
             if (usados < maxcampos) {
                 campos[usados] = actual;
                 usados = usados + 1;
@@ -60,12 +60,22 @@ bool Repositorio::leercsvequipos(string ruta) {
 
     string linea = "";
 
-    if (getline(archivo, linea)) {
-        string campos[40];
-        int total = partirlinea(linea, campos, 40);
-        columnascsv = total;
+    // linea 1: titulo
+    if (getline(archivo, linea) == false) {
+        archivo.close();
+        return true;
     }
 
+    // linea 2: encabezado real
+    if (getline(archivo, linea)) {
+        string campos[40];
+        columnascsv = partirlinea(linea, campos, 40);
+    } else {
+        archivo.close();
+        return true;
+    }
+
+    // desde linea 3: datos de equipos
     while (getline(archivo, linea)) {
         if (linea.size() == 0) {
             continue;
