@@ -8,19 +8,29 @@ using namespace std;
 class jugador {
 public:
     jugador();
-    jugador(string nombreinicial, string equipoinicial, string posicioninicial);
+    jugador(string nombreinicial, string equipoinicial, string posicioninicial, int camisetainicial);
 
     string getnombre() const;
     string getequipo() const;
     string getposicion() const;
+    int getcamiseta() const;
     int getgoles() const;
+    int getrojas() const;
+    int getamarillas() const;
+    int getfaltas() const;
+    int getminutosjugados() const;
     int getasistencias() const;
     int getpartidos() const;
 
     void setnombre(string nuevonombre);
     void setequipo(string nuevoequipo);
     void setposicion(string nuevaposicion);
+    void setcamiseta(int nuevacamiseta);
     void agregargol();
+    void agregarroja();
+    void agregaramarilla();
+    void agregarfalta();
+    void sumarminutos(int minutos);
     void agregarasistencia();
     void agregarpartido();
 
@@ -28,7 +38,12 @@ private:
     string nombre;
     string equipo;
     string posicion;
+    int camiseta;
     int goles;
+    int rojas;
+    int amarillas;
+    int faltas;
+    int minutosjugados;
     int asistencias;
     int partidos;
 };

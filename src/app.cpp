@@ -34,7 +34,19 @@ void App::iniciar() {
         }
     }
 
+    int totaljugadores = repo.getcantidadjugadores();
+    int jugadorescargados = 0;
+
+    for (int i = 0; i < totaljugadores; i = i + 1) {
+        jugador actual = repo.getjugador(i);
+        bool ok = torneo.cargarjugadorbase(actual);
+        if (ok) {
+            jugadorescargados = jugadorescargados + 1;
+        }
+    }
+
     cout << "equipos base cargados: " << cargados << endl;
+    cout << "jugadores base cargados: " << jugadorescargados << endl;
     sim.probar();
     med.mostrar();
 }

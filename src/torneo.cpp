@@ -11,6 +11,9 @@ Torneo::Torneo() {
     tabla = 0;
     cantidadfilastabla = 0;
     equiposcargados = 0;
+    jugadoresbase = 0;
+    cantidadjugadores = 0;
+    capacidadjugadores = 0;
 }
 
 Torneo::~Torneo() {
@@ -22,6 +25,11 @@ Torneo::~Torneo() {
     if (tabla != 0) {
         delete[] tabla;
         tabla = 0;
+    }
+
+    if (jugadoresbase != 0) {
+        delete[] jugadoresbase;
+        jugadoresbase = 0;
     }
 }
 
@@ -50,6 +58,11 @@ void Torneo::iniciargrupos(int cantidad) {
         tabla = 0;
     }
 
+    if (jugadoresbase != 0) {
+        delete[] jugadoresbase;
+        jugadoresbase = 0;
+    }
+
     int cantidadfinal = cantidad;
     if (cantidadfinal < 0) {
         cantidadfinal = 0;
@@ -61,6 +74,12 @@ void Torneo::iniciargrupos(int cantidad) {
     cantidadfilastabla = cantidadgrupos * 4;
     tabla = new tablaposiciones[cantidadfilastabla];
     equiposcargados = 0;
+    capacidadjugadores = cantidadfilastabla * 15;
+    cantidadjugadores = 0;
+
+    if (capacidadjugadores > 0) {
+        jugadoresbase = new jugador[capacidadjugadores];
+    }
 }
 
 bool Torneo::registrargrupobase(int indice, string nombregrupo) {
@@ -126,6 +145,24 @@ bool Torneo::cargarequipobase(int indice, string nombreequipo) {
 
 int Torneo::getequiposcargados() const {
     return equiposcargados;
+}
+
+bool Torneo::cargarjugadorbase(jugador nuevojugador) {
+    if (jugadoresbase == 0) {
+        return false;
+    }
+
+    if (cantidadjugadores >= capacidadjugadores) {
+        return false;
+    }
+
+    jugadoresbase[cantidadjugadores] = nuevojugador;
+    cantidadjugadores = cantidadjugadores + 1;
+    return true;
+}
+
+int Torneo::getcantidadjugadores() const {
+    return cantidadjugadores;
 }
 
 int Torneo::getcantidadgrupos() const {

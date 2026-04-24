@@ -138,17 +138,28 @@ Repositorio::Repositorio() {
     filascsv = 0;
     columnascsv = 0;
     cantidadequipos = 0;
+    cantidadjugadores = 0;
     rutacsv = "";
 
     for (int i = 0; i < maxequipos; i = i + 1) {
         equiposcsv[i] = "";
         confederacionescsv[i] = "";
         rankingscsv[i] = 0;
+        inicioplantillas[i] = -1;
+        cantidadplantillas[i] = 0;
     }
 }
 
 void Repositorio::cargarBase() {
-    bool ok = leercsvequipos("../../../selecciones_clasificadas_mundial.csv");
+    bool ok = leercsvequipos("../../selecciones_clasificadas_mundial.csv");
+
+    if (ok == false) {
+        ok = leercsvequipos("../../../selecciones_clasificadas_mundial.csv");
+    }
+
+    if (ok == false) {
+        ok = leercsvequipos("selecciones_clasificadas_mundial.csv");
+    }
 
     if (ok) {
         cout << "csv ok -> filas: " << filascsv << ", columnas: " << columnascsv;
@@ -167,18 +178,21 @@ bool Repositorio::leercsvequipos(string ruta) {
     filascsv = 0;
     columnascsv = 0;
     cantidadequipos = 0;
+    cantidadjugadores = 0;
     rutacsv = ruta;
 
     for (int i = 0; i < maxequipos; i = i + 1) {
         equiposcsv[i] = "";
         confederacionescsv[i] = "";
         rankingscsv[i] = 0;
+        inicioplantillas[i] = -1;
+        cantidadplantillas[i] = 0;
     }
 
     string linea = "";
 
     // linea 1: titulo
-    if (getline(archivo, linea) == false) {
+    if (!getline(archivo, linea)) {
         archivo.close();
         return true;
     }
@@ -222,6 +236,7 @@ bool Repositorio::leercsvequipos(string ruta) {
     }
 
     archivo.close();
+    armarplantillasbase();
     return true;
 }
 
@@ -235,6 +250,10 @@ int Repositorio::getcolumnascsv() const {
 
 int Repositorio::getcantidadequipos() const {
     return cantidadequipos;
+}
+
+int Repositorio::getcantidadjugadores() const {
+    return cantidadjugadores;
 }
 
 string Repositorio::getequipo(int indice) const {
@@ -271,4 +290,137 @@ int Repositorio::getranking(int indice) const {
     }
 
     return rankingscsv[indice];
+}
+
+jugador Repositorio::getjugador(int indice) const {
+    if (indice < 0) {
+        return jugador();
+    }
+
+    if (indice >= cantidadjugadores) {
+        return jugador();
+    }
+
+    return jugadorescsv[indice];
+}
+
+void Repositorio::armarplantillasbase() {
+    cantidadjugadores = 0;
+
+    for (int i = 0; i < cantidadequipos; i = i + 1) {
+        inicioplantillas[i] = cantidadjugadores;
+        cantidadplantillas[i] = 0;
+
+        int q = 0;
+        while (q < 2) {
+            string nombre = equiposcsv[i] + " arquero ";
+            nombre = nombre + char('1' + q);
+            agregarjugadorbase(i, nombre, "arquero");
+            q = q + 1;
+        }
+
+        int d = 0;
+        while (d < 5) {
+            string nombre = equiposcsv[i] + " defensa ";
+            nombre = nombre + char('1' + d);
+            agregarjugadorbase(i, nombre, "defensa");
+            d = d + 1;
+        }
+
+        int v = 0;
+        while (v < 5) {
+            string nombre = equiposcsv[i] + " volante ";
+            nombre = nombre + char('1' + v);
+            agregarjugadorbase(i, nombre, "volante");
+            v = v + 1;
+        }
+
+        int f = 0;
+        while (f < 3) {
+            string nombre = equiposcsv[i] + " delantero ";
+            nombre = nombre + char('1' + f);
+            agregarjugadorbase(i, nombre, "delantero");
+            f = f + 1;
+        }
+
+        int golesbase = calculargolesbase(rankingscsv[i]);
+        repartirgolesbase(i, golesbase);
+    }
+}
+
+bool Repositorio::agregarjugadorbase(int indiceequipo, string nombrejugador, string posicion) {
+    if (indiceequipo < 0) {
+        return false;
+    }
+
+    if (indiceequipo >= cantidadequipos) {
+        return false;
+    }
+
+    if (cantidadjugadores >= maxjugadores) {
+        return false;
+    }
+
+    int camiseta = cantidadplantillas[indiceequipo] + 1;
+    jugador nuevo(nombrejugador, equiposcsv[indiceequipo], posicion, camiseta);
+    jugadorescsv[cantidadjugadores] = nuevo;
+    cantidadjugadores = cantidadjugadores + 1;
+    cantidadplantillas[indiceequipo] = cantidadplantillas[indiceequipo] + 1;
+    return true;
+}
+
+void Repositorio::repartirgolesbase(int indiceequipo, int golesbase) {
+    if (indiceequipo < 0) {
+        return;
+    }
+
+    if (indiceequipo >= cantidadequipos) {
+        return;
+    }
+
+    int inicio = inicioplantillas[indiceequipo];
+    int cantidad = cantidadplantillas[indiceequipo];
+    if (inicio < 0 || cantidad <= 0) {
+        return;
+    }
+
+    if (golesbase <= 0) {
+        return;
+    }
+
+    int base = golesbase / cantidad;
+    int sobrantes = golesbase % cantidad;
+
+    for (int i = 0; i < cantidad; i = i + 1) {
+        int actual = inicio + i;
+
+        for (int j = 0; j < base; j = j + 1) {
+            jugadorescsv[actual].agregargol();
+        }
+
+        if (i < sobrantes) {
+            jugadorescsv[actual].agregargol();
+        }
+    }
+
+    for (int i = 0; i < golesbase; i = i + 1) {
+        int apoyo = inicio + ((i + 1) % cantidad);
+        jugadorescsv[apoyo].agregarasistencia();
+    }
+}
+
+int Repositorio::calculargolesbase(int ranking) const {
+    if (ranking <= 0) {
+        return 4;
+    }
+
+    if (ranking <= 8) {
+        return 6;
+    }
+
+    if (ranking <= 20) {
+        return 5;
+    }
+
+    return 4;
 }
