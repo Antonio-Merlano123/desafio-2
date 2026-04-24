@@ -5,7 +5,27 @@
 
 using namespace std;
 
-static int textoaentero(string texto) {
+static string quitarsaltos(string texto) {
+    string limpio = "";
+
+    for (int i = 0; i < int(texto.size()); i = i + 1) {
+        char c = texto[i];
+
+        if (c == '\r') {
+            continue;
+        }
+
+        if (c == '\n') {
+            continue;
+        }
+
+        limpio = limpio + c;
+    }
+
+    return limpio;
+}
+
+static string quitarlados(string texto) {
     int inicio = 0;
     int fin = int(texto.size());
 
@@ -27,9 +47,52 @@ static int textoaentero(string texto) {
         }
     }
 
+    string limpio = "";
+    for (int i = inicio; i < fin; i = i + 1) {
+        limpio = limpio + texto[i];
+    }
+
+    return limpio;
+}
+
+static string normalizarconfederacion(string texto) {
+    string limpio = quitarlados(quitarsaltos(texto));
+
+    if (limpio == "UEFA") {
+        return "UEFA";
+    }
+
+    if (limpio == "CONMEBOL") {
+        return "CONMEBOL";
+    }
+
+    if (limpio == "AFC") {
+        return "AFC";
+    }
+
+    if (limpio == "CAF") {
+        return "CAF";
+    }
+
+    if (limpio == "Concacaf") {
+        return "CONCACAF";
+    }
+
+    if (limpio == "CONCACAF") {
+        return "CONCACAF";
+    }
+
+    return limpio;
+}
+
+static int textoaentero(string texto) {
+    string limpio = quitarlados(texto);
+    int inicio = 0;
+    int fin = int(limpio.size());
+
     int valor = 0;
     for (int i = inicio; i < fin; i = i + 1) {
-        char c = texto[i];
+        char c = limpio[i];
         if (c < '0') {
             break;
         }
@@ -150,8 +213,8 @@ bool Repositorio::leercsvequipos(string ruta) {
         if (filavalida) {
             int pos = cantidadequipos;
             rankingscsv[pos] = textoaentero(campos[0]);
-            equiposcsv[pos] = campos[1];
-            confederacionescsv[pos] = campos[4];
+            equiposcsv[pos] = quitarlados(campos[1]);
+            confederacionescsv[pos] = normalizarconfederacion(campos[4]);
             cantidadequipos = pos + 1;
         }
 

@@ -17,6 +17,8 @@ public:
     void iniciargrupos(int cantidad);
     bool registrargrupobase(int indice, string nombregrupo);
     bool cargarequipotabla(int fila, string nombreequipo);
+    bool cargarequipobase(int indice, string nombreequipo);
+    int getequiposcargados() const;
     int getcantidadgrupos() const;
 
 private:
@@ -25,6 +27,7 @@ private:
     int cantidadgrupos;
     tablaposiciones* tabla;
     int cantidadfilastabla;
+    int equiposcargados;
 };
 
 #endif // TORNEO_H
