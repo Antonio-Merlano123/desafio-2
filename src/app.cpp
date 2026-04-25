@@ -28,11 +28,15 @@ void App::iniciar() {
 
     for (int i = 0; i < totalbase; i = i + 1) {
         string nombre = repo.getequipo(i);
-        bool ok = torneo.cargarequipobase(i, nombre);
+        string confederacion = repo.getconfederacion(i);
+        int ranking = repo.getranking(i);
+        bool ok = torneo.cargarequipobase(i, nombre, confederacion, ranking);
         if (ok) {
             cargados = cargados + 1;
         }
     }
+
+    bool gruposok = torneo.armargruposporranking();
 
     int totaljugadores = repo.getcantidadjugadores();
     int jugadorescargados = 0;
@@ -46,6 +50,10 @@ void App::iniciar() {
     }
 
     cout << "equipos base cargados: " << cargados << endl;
+    cout << "sorteo de grupos: " << (gruposok ? "ok" : "fallo") << endl;
+    if (gruposok) {
+        torneo.mostrargrupos();
+    }
     cout << "jugadores base cargados: " << jugadorescargados << endl;
     sim.probar();
     med.mostrar();

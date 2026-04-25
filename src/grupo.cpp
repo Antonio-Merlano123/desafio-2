@@ -3,11 +3,21 @@
 grupo::grupo() {
     nombre = "grupo x";
     cantidad = 0;
+
+    for (int i = 0; i < 4; i = i + 1) {
+        equipos[i] = "";
+        confederaciones[i] = "";
+    }
 }
 
 grupo::grupo(string nombregrupo) {
     nombre = nombregrupo;
     cantidad = 0;
+
+    for (int i = 0; i < 4; i = i + 1) {
+        equipos[i] = "";
+        confederaciones[i] = "";
+    }
 }
 
 void grupo::setnombre(string nuevonombre) {
@@ -19,15 +29,42 @@ string grupo::getnombre() const {
 }
 
 bool grupo::agregarequipo(string nombreequipo) {
+    return agregarequipo(nombreequipo, "");
+}
+
+bool grupo::agregarequipo(string nombreequipo, string confederacion) {
     if (cantidad >= 4) {
         return false;
-    } else {
-        int posactual = cantidad;
-        equipos[posactual] = nombreequipo;
-        cantidad = posactual + 1;
+    }
 
+    if (puedeagregarconfederacion(confederacion) == false) {
+        return false;
+    }
+
+    int posactual = cantidad;
+    equipos[posactual] = nombreequipo;
+    confederaciones[posactual] = confederacion;
+    cantidad = posactual + 1;
+    return true;
+}
+
+bool grupo::puedeagregarconfederacion(string confederacion) const {
+    if (confederacion == "") {
         return true;
     }
+
+    int conteo = 0;
+    for (int i = 0; i < cantidad; i = i + 1) {
+        if (confederaciones[i] == confederacion) {
+            conteo = conteo + 1;
+        }
+    }
+
+    if (confederacion == "UEFA") {
+        return conteo < 2;
+    }
+
+    return conteo == 0;
 }
 
 string grupo::getequipo(int pos) const {
@@ -49,6 +86,24 @@ string grupo::getequipo(int pos) const {
     return nombreequipo;
 }
 
+string grupo::getconfederacion(int pos) const {
+    bool posicionvalida = true;
+
+    if (pos < 0) {
+        posicionvalida = false;
+    }
+
+    if (pos >= cantidad) {
+        posicionvalida = false;
+    }
+
+    if (posicionvalida == false) {
+        return "";
+    }
+
+    return confederaciones[pos];
+}
+
 int grupo::getcantidad() const {
     return cantidad;
 }
@@ -58,5 +113,14 @@ bool grupo::estalleno() const {
         return true;
     } else {
         return false;
+    }
+}
+
+void grupo::limpiar() {
+    cantidad = 0;
+
+    for (int i = 0; i < 4; i = i + 1) {
+        equipos[i] = "";
+        confederaciones[i] = "";
     }
 }

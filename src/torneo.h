@@ -19,7 +19,10 @@ public:
     bool registrargrupobase(int indice, string nombregrupo);
     bool cargarequipotabla(int fila, string nombreequipo);
     bool cargarequipobase(int indice, string nombreequipo);
+    bool cargarequipobase(int indice, string nombreequipo, string confederacion, int ranking);
     bool cargarjugadorbase(jugador nuevojugador);
+    bool armargruposporranking();
+    void mostrargrupos() const;
     int getequiposcargados() const;
     int getcantidadjugadores() const;
     int getcantidadgrupos() const;
@@ -34,6 +37,15 @@ private:
     jugador* jugadoresbase;
     int cantidadjugadores;
     int capacidadjugadores;
+    string* equiposbase;
+    string* confederacionesbase;
+    int* rankingsbase;
+    int cantidadequiposbase;
+
+    void ordenarporelranking(int indices[], int total) const;
+    int buscarhost(int indices[], int total) const;
+    void barajarbombo(int bombo[], int inicio) const;
+    bool intentarsorteo(int bombos[4][12]);
 };
 
 #endif // TORNEO_H
