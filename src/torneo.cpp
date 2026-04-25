@@ -51,6 +51,10 @@ Torneo::Torneo() {
     confederacionesbase = 0;
     rankingsbase = 0;
     cantidadequiposbase = 0;
+    partidosgrupos = 0;
+    diapartidosgrupos = 0;
+    cantidadpartidosgrupos = 0;
+    capacidadpartidosgrupos = 0;
 
     srand(unsigned(time(0)));
 }
@@ -84,6 +88,16 @@ Torneo::~Torneo() {
     if (rankingsbase != 0) {
         delete[] rankingsbase;
         rankingsbase = 0;
+    }
+
+    if (partidosgrupos != 0) {
+        delete[] partidosgrupos;
+        partidosgrupos = 0;
+    }
+
+    if (diapartidosgrupos != 0) {
+        delete[] diapartidosgrupos;
+        diapartidosgrupos = 0;
     }
 }
 
@@ -132,6 +146,16 @@ void Torneo::iniciargrupos(int cantidad) {
         rankingsbase = 0;
     }
 
+    if (partidosgrupos != 0) {
+        delete[] partidosgrupos;
+        partidosgrupos = 0;
+    }
+
+    if (diapartidosgrupos != 0) {
+        delete[] diapartidosgrupos;
+        diapartidosgrupos = 0;
+    }
+
     int cantidadfinal = cantidad;
     if (cantidadfinal < 0) {
         cantidadfinal = 0;
@@ -163,6 +187,17 @@ void Torneo::iniciargrupos(int cantidad) {
     }
 
     cantidadequiposbase = 0;
+    cantidadpartidosgrupos = 0;
+    capacidadpartidosgrupos = cantidadgrupos * 6;
+
+    if (capacidadpartidosgrupos > 0) {
+        partidosgrupos = new partido[capacidadpartidosgrupos];
+        diapartidosgrupos = new int[capacidadpartidosgrupos];
+
+        for (int i = 0; i < capacidadpartidosgrupos; i = i + 1) {
+            diapartidosgrupos[i] = -1;
+        }
+    }
 }
 
 bool Torneo::registrargrupobase(int indice, string nombregrupo) {
@@ -285,6 +320,16 @@ int Torneo::buscarhost(int indices[], int total) const {
         int indice = indices[i];
         if (eshostmundial(equiposbase[indice])) {
             return indice;
+        }
+    }
+
+    return -1;
+}
+
+int Torneo::buscarindiceequipo(string nombreequipo) const {
+    for (int i = 0; i < cantidadequiposbase; i = i + 1) {
+        if (equiposbase[i] == nombreequipo) {
+            return i;
         }
     }
 
@@ -452,6 +497,142 @@ void Torneo::mostrargrupos() const {
         for (int e = 0; e < grupos[g].getcantidad(); e = e + 1) {
             cout << "  - " << grupos[g].getequipo(e);
             cout << " (" << grupos[g].getconfederacion(e) << ")" << endl;
+        }
+    }
+}
+
+bool Torneo::generarcalendarioconlimite(int maxpartidospordia, int descansominimo) {
+    if (partidosgrupos == 0 || diapartidosgrupos == 0) {
+        return false;
+    }
+
+    int pordia[17];
+    for (int i = 0; i < 17; i = i + 1) {
+        pordia[i] = 0;
+    }
+
+    int ultimodia[48];
+    for (int i = 0; i < 48; i = i + 1) {
+        ultimodia[i] = -100;
+    }
+
+    cantidadpartidosgrupos = 0;
+
+    for (int g = 0; g < cantidadgrupos; g = g + 1) {
+        if (grupos[g].getcantidad() != 4) {
+            return false;
+        }
+
+        string e0 = grupos[g].getequipo(0);
+        string e1 = grupos[g].getequipo(1);
+        string e2 = grupos[g].getequipo(2);
+        string e3 = grupos[g].getequipo(3);
+
+        string local[6];
+        string visita[6];
+
+        local[0] = e0; visita[0] = e1;
+        local[1] = e2; visita[1] = e3;
+        local[2] = e0; visita[2] = e2;
+        local[3] = e1; visita[3] = e3;
+        local[4] = e0; visita[4] = e3;
+        local[5] = e1; visita[5] = e2;
+
+        for (int m = 0; m < 6; m = m + 1) {
+            int ilocal = buscarindiceequipo(local[m]);
+            int ivisita = buscarindiceequipo(visita[m]);
+
+            if (ilocal < 0 || ivisita < 0) {
+                return false;
+            }
+
+            int diaelegido = -1;
+
+            for (int dia = 0; dia < 17; dia = dia + 1) {
+                if (pordia[dia] >= maxpartidospordia) {
+                    continue;
+                }
+
+                int descansolocal = dia - ultimodia[ilocal];
+                int descansovisita = dia - ultimodia[ivisita];
+
+                if (descansolocal < descansominimo) {
+                    continue;
+                }
+
+                if (descansovisita < descansominimo) {
+                    continue;
+                }
+
+                diaelegido = dia;
+                break;
+            }
+
+            if (diaelegido < 0) {
+                return false;
+            }
+
+            if (cantidadpartidosgrupos >= capacidadpartidosgrupos) {
+                return false;
+            }
+
+            partidosgrupos[cantidadpartidosgrupos] = partido(local[m], visita[m]);
+            diapartidosgrupos[cantidadpartidosgrupos] = diaelegido;
+            cantidadpartidosgrupos = cantidadpartidosgrupos + 1;
+
+            pordia[diaelegido] = pordia[diaelegido] + 1;
+            ultimodia[ilocal] = diaelegido;
+            ultimodia[ivisita] = diaelegido;
+        }
+    }
+
+    return true;
+}
+
+bool Torneo::generarcalendariogrupos() {
+    bool okestricto = generarcalendarioconlimite(4, 3);
+    if (okestricto) {
+        return true;
+    }
+
+    bool okintermedio = generarcalendarioconlimite(5, 3);
+    if (okintermedio) {
+        return true;
+    }
+
+    return generarcalendarioconlimite(5, 2);
+}
+
+void Torneo::mostrarcalendariogrupos() const {
+    if (cantidadpartidosgrupos <= 0) {
+        return;
+    }
+
+    cout << "calendario fase de grupos" << endl;
+
+    for (int dia = 0; dia < 17; dia = dia + 1) {
+        bool tienepartidos = false;
+
+        for (int i = 0; i < cantidadpartidosgrupos; i = i + 1) {
+            if (diapartidosgrupos[i] == dia) {
+                tienepartidos = true;
+                break;
+            }
+        }
+
+        if (tienepartidos == false) {
+            continue;
+        }
+
+        cout << "dia " << (dia + 1) << endl;
+
+        for (int i = 0; i < cantidadpartidosgrupos; i = i + 1) {
+            if (diapartidosgrupos[i] != dia) {
+                continue;
+            }
+
+            cout << "  - " << partidosgrupos[i].getlocal();
+            cout << " vs " << partidosgrupos[i].getvisita() << endl;
         }
     }
 }

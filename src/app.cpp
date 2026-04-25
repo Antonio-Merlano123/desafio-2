@@ -37,6 +37,10 @@ void App::iniciar() {
     }
 
     bool gruposok = torneo.armargruposporranking();
+    bool calendariook = false;
+    if (gruposok) {
+        calendariook = torneo.generarcalendariogrupos();
+    }
 
     int totaljugadores = repo.getcantidadjugadores();
     int jugadorescargados = 0;
@@ -53,6 +57,10 @@ void App::iniciar() {
     cout << "sorteo de grupos: " << (gruposok ? "ok" : "fallo") << endl;
     if (gruposok) {
         torneo.mostrargrupos();
+    }
+    cout << "calendario grupos: " << (calendariook ? "ok" : "fallo") << endl;
+    if (calendariook) {
+        torneo.mostrarcalendariogrupos();
     }
     cout << "jugadores base cargados: " << jugadorescargados << endl;
     sim.probar();
