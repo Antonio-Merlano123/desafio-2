@@ -63,7 +63,7 @@ void App::iniciar() {
         torneo.mostrarcalendariogrupos();
     }
     cout << "jugadores base cargados: " << jugadorescargados << endl;
-    sim.probar();
+    sim.probar(repo);
     med.mostrar();
 }
 
