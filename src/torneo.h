@@ -93,6 +93,7 @@ private:
     int buscarjugadoresdelequipo(string nombreequipo, int indices[], int maxindices) const;
     double calcularlambdapartido(double golesfavora, double golescontrab) const;
     int redondeargolespartido(double lambda) const;
+    string resolverganadoreliminacion(const Repositorio& repo, string local, string visita, int& goleslocal, int& golesvisita) const;
     void ordenarfilasgrupo(int filas[4]) const;
     void barajarbombo(int bombo[], int inicio) const;
     bool intentarsorteo(int bombos[4][12]);

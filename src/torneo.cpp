@@ -1048,45 +1048,224 @@ void Torneo::mostrarclasificados() const {
 }
 
 void Torneo::armardieciseisavos() {
-    // juntar los 32 clasificados con su indice de grupo
+    // regla del enunciado:
+    // 1) cabezas de grupo vs terceros
+    // 2) resto cabezas vs 4 peores segundos
+    // 3) resto de segundos entre si
     int total = cantclasificados1 + cantclasificados2 + cantclasificados3;
-    if (total != 32) {
-        cout << "armado dieciseisavos: no hay 32 clasificados (" << total << ")" << endl;
+    if (cantclasificados1 != 12 || cantclasificados2 != 12 || cantclasificados3 != 8 || total != 32) {
+        cout << "armado dieciseisavos: clasificacion incompleta" << endl;
         return;
     }
 
-    string equipos[32];
-    int grupode[32];
-
-    for (int i = 0; i < cantclasificados1; i = i + 1) {
-        equipos[i] = clasificados1[i];
-        grupode[i] = i;
-    }
-    for (int i = 0; i < cantclasificados2; i = i + 1) {
-        equipos[12 + i] = clasificados2[i];
-        grupode[12 + i] = i;
-    }
-    for (int i = 0; i < cantclasificados3; i = i + 1) {
-        equipos[24 + i] = clasificados3[i];
-        grupode[24 + i] = grupoindterceros[i];
+    int peoressegundos[12];
+    for (int i = 0; i < 12; i = i + 1) {
+        peoressegundos[i] = i;
     }
 
-    // mezclar aleatorio
-    for (int i = total - 1; i > 0; i = i - 1) {
+    // ordenar segundos de peor a mejor para escoger los 4 peores
+    for (int i = 0; i < 12; i = i + 1) {
+        for (int j = i + 1; j < 12; j = j + 1) {
+            int fi = buscarfilatabla(clasificados2[peoressegundos[i]]);
+            int fj = buscarfilatabla(clasificados2[peoressegundos[j]]);
+
+            bool intercambiar = false;
+            if (fi >= 0 && fj >= 0) {
+                if (tabla[fj].getpuntos() < tabla[fi].getpuntos()) {
+                    intercambiar = true;
+                } else if (tabla[fj].getpuntos() == tabla[fi].getpuntos()) {
+                    if (tabla[fj].getdiferencia() < tabla[fi].getdiferencia()) {
+                        intercambiar = true;
+                    } else if (tabla[fj].getdiferencia() == tabla[fi].getdiferencia()) {
+                        if (tabla[fj].getgolesfavor() < tabla[fi].getgolesfavor()) {
+                            intercambiar = true;
+                        } else if (tabla[fj].getgolesfavor() == tabla[fi].getgolesfavor()) {
+                            if (tabla[fj].getnombre() < tabla[fi].getnombre()) {
+                                intercambiar = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (intercambiar) {
+                int t = peoressegundos[i];
+                peoressegundos[i] = peoressegundos[j];
+                peoressegundos[j] = t;
+            }
+        }
+    }
+
+    int terceros[8];
+    int peores4[4];
+    int usadossegundo[12];
+    int usadostercero[8];
+
+    for (int i = 0; i < 12; i = i + 1) {
+        usadossegundo[i] = 0;
+    }
+    for (int i = 0; i < 8; i = i + 1) {
+        terceros[i] = i;
+        usadostercero[i] = 0;
+    }
+    for (int i = 0; i < 4; i = i + 1) {
+        peores4[i] = peoressegundos[i];
+        usadossegundo[peores4[i]] = 2; // marca especial: peor segundo
+    }
+
+    // una mezcla simple para no dejar cruces tan previsibles
+    for (int i = 7; i > 0; i = i - 1) {
         int j = rand() % (i + 1);
-        string te = equipos[i]; equipos[i] = equipos[j]; equipos[j] = te;
-        int tg = grupode[i]; grupode[i] = grupode[j]; grupode[j] = tg;
+        int t = terceros[i];
+        terceros[i] = terceros[j];
+        terceros[j] = t;
+    }
+    for (int i = 3; i > 0; i = i - 1) {
+        int j = rand() % (i + 1);
+        int t = peores4[i];
+        peores4[i] = peores4[j];
+        peores4[j] = t;
     }
 
-    // corregir pares del mismo grupo: buscar un swap en los siguientes pares
-    for (int i = 0; i < total - 1; i = i + 2) {
-        if (grupode[i] == grupode[i + 1]) {
-            for (int j = i + 2; j < total; j = j + 1) {
-                if (grupode[j] != grupode[i]) {
-                    string te = equipos[i + 1]; equipos[i + 1] = equipos[j]; equipos[j] = te;
-                    int tg = grupode[i + 1]; grupode[i + 1] = grupode[j]; grupode[j] = tg;
+    string locales[16];
+    string visitas[16];
+    int gruposlocal[16];
+    int gruposvisita[16];
+    int partidosarmados = 0;
+
+    // (1) 8 cabezas vs 8 terceros
+    for (int i = 0; i < 8; i = i + 1) {
+        int grupohead = i;
+        int elegido = -1;
+
+        for (int t = 0; t < 8; t = t + 1) {
+            int idtercero = terceros[t];
+            if (usadostercero[idtercero] == 1) {
+                continue;
+            }
+            if (grupoindterceros[idtercero] != grupohead) {
+                elegido = idtercero;
+                break;
+            }
+        }
+
+        if (elegido < 0) {
+            for (int t = 0; t < 8; t = t + 1) {
+                int idtercero = terceros[t];
+                if (usadostercero[idtercero] == 0) {
+                    elegido = idtercero;
                     break;
                 }
+            }
+        }
+
+        locales[partidosarmados] = clasificados1[i];
+        visitas[partidosarmados] = clasificados3[elegido];
+        gruposlocal[partidosarmados] = grupohead;
+        gruposvisita[partidosarmados] = grupoindterceros[elegido];
+        usadostercero[elegido] = 1;
+        partidosarmados = partidosarmados + 1;
+    }
+
+    // (2) 4 cabezas restantes vs 4 peores segundos
+    for (int i = 8; i < 12; i = i + 1) {
+        int grupohead = i;
+        int elegido = -1;
+
+        for (int s = 0; s < 4; s = s + 1) {
+            int idseg = peores4[s];
+            if (usadossegundo[idseg] == 1) {
+                continue;
+            }
+            if (idseg != grupohead) {
+                elegido = idseg;
+                break;
+            }
+        }
+
+        if (elegido < 0) {
+            for (int s = 0; s < 4; s = s + 1) {
+                int idseg = peores4[s];
+                if (usadossegundo[idseg] != 1) {
+                    elegido = idseg;
+                    break;
+                }
+            }
+        }
+
+        locales[partidosarmados] = clasificados1[i];
+        visitas[partidosarmados] = clasificados2[elegido];
+        gruposlocal[partidosarmados] = grupohead;
+        gruposvisita[partidosarmados] = elegido;
+        usadossegundo[elegido] = 1;
+        partidosarmados = partidosarmados + 1;
+    }
+
+    // (3) el resto de segundos se enfrentan entre si
+    int segundosrestantes[8];
+    int cantrestantes = 0;
+    for (int i = 0; i < 12; i = i + 1) {
+        if (usadossegundo[i] == 0) {
+            segundosrestantes[cantrestantes] = i;
+            cantrestantes = cantrestantes + 1;
+        }
+    }
+
+    int usadorestante[8];
+    for (int i = 0; i < 8; i = i + 1) {
+        usadorestante[i] = 0;
+    }
+
+    for (int i = 0; i < cantrestantes; i = i + 1) {
+        if (usadorestante[i] == 1) {
+            continue;
+        }
+
+        int jpareja = -1;
+        for (int j = i + 1; j < cantrestantes; j = j + 1) {
+            if (usadorestante[j] == 1) {
+                continue;
+            }
+            if (segundosrestantes[i] != segundosrestantes[j]) {
+                jpareja = j;
+                break;
+            }
+        }
+
+        if (jpareja < 0) {
+            for (int j = i + 1; j < cantrestantes; j = j + 1) {
+                if (usadorestante[j] == 0) {
+                    jpareja = j;
+                    break;
+                }
+            }
+        }
+
+        if (jpareja >= 0) {
+            locales[partidosarmados] = clasificados2[segundosrestantes[i]];
+            visitas[partidosarmados] = clasificados2[segundosrestantes[jpareja]];
+            gruposlocal[partidosarmados] = segundosrestantes[i];
+            gruposvisita[partidosarmados] = segundosrestantes[jpareja];
+            usadorestante[i] = 1;
+            usadorestante[jpareja] = 1;
+            partidosarmados = partidosarmados + 1;
+        }
+    }
+
+    // ajuste final por si quedo algun cruce del mismo grupo
+    for (int i = 0; i < partidosarmados; i = i + 1) {
+        if (gruposlocal[i] != gruposvisita[i]) {
+            continue;
+        }
+        for (int j = i + 1; j < partidosarmados; j = j + 1) {
+            if (gruposlocal[i] != gruposvisita[j] && gruposlocal[j] != gruposvisita[i]) {
+                string tv = visitas[i];
+                visitas[i] = visitas[j];
+                visitas[j] = tv;
+                int tg = gruposvisita[i];
+                gruposvisita[i] = gruposvisita[j];
+                gruposvisita[j] = tg;
+                break;
             }
         }
     }
@@ -1094,11 +1273,11 @@ void Torneo::armardieciseisavos() {
     if (partidosdieciseisavos != 0) {
         delete[] partidosdieciseisavos;
     }
-    cantdieciseisavos = total / 2;
+    cantdieciseisavos = partidosarmados;
     partidosdieciseisavos = new partido[cantdieciseisavos];
 
     for (int i = 0; i < cantdieciseisavos; i = i + 1) {
-        partidosdieciseisavos[i] = partido(equipos[i * 2], equipos[i * 2 + 1]);
+        partidosdieciseisavos[i] = partido(locales[i], visitas[i]);
     }
 }
 
@@ -1110,6 +1289,51 @@ void Torneo::mostrardieciseisavos() const {
              << " vs "
              << partidosdieciseisavos[i].getvisita() << endl;
     }
+}
+
+string Torneo::resolverganadoreliminacion(const Repositorio& repo, string local, string visita, int& goleslocal, int& golesvisita) const {
+    if (goleslocal > golesvisita) {
+        return local;
+    }
+    if (golesvisita > goleslocal) {
+        return visita;
+    }
+
+    int ilocal = buscarindiceequiporepo(repo, local);
+    int ivisita = buscarindiceequiporepo(repo, visita);
+
+    double problocal = 0.5;
+
+    if (ilocal >= 0 && ivisita >= 0) {
+        int rankinglocal = repo.getranking(ilocal);
+        int rankingvisita = repo.getranking(ivisita);
+        int diferencia = rankingvisita - rankinglocal;
+
+        double sesgo = double(diferencia) / 220.0;
+        if (sesgo > 0.35) {
+            sesgo = 0.35;
+        }
+        if (sesgo < -0.35) {
+            sesgo = -0.35;
+        }
+
+        problocal = 0.5 + sesgo;
+        if (problocal < 0.1) {
+            problocal = 0.1;
+        }
+        if (problocal > 0.9) {
+            problocal = 0.9;
+        }
+    }
+
+    double r = double(rand() % 10000) / 10000.0;
+    if (r < problocal) {
+        goleslocal = goleslocal + 1;
+        return local;
+    }
+
+    golesvisita = golesvisita + 1;
+    return visita;
 }
 
 bool Torneo::simularfasesfinales(const Repositorio& repo) {
@@ -1160,13 +1384,10 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
         int goleslocal = redondeargolespartido(lambdalocal);
         int golesvisita = redondeargolespartido(lambdavisita);
 
-        partidosdieciseisavos[i].setresultado(goleslocal, golesvisita);
+        string ganador = resolverganadoreliminacion(repo, local, visita, goleslocal, golesvisita);
 
-        if (goleslocal >= golesvisita) {
-            ganadores16[i] = local;
-        } else {
-            ganadores16[i] = visita;
-        }
+        partidosdieciseisavos[i].setresultado(goleslocal, golesvisita);
+        ganadores16[i] = ganador;
     }
 
     cantoctavos = cantdieciseisavos / 2;
@@ -1206,13 +1427,10 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
         int goleslocal = redondeargolespartido(lambdalocal);
         int golesvisita = redondeargolespartido(lambdavisita);
 
-        partidosoctavos[i].setresultado(goleslocal, golesvisita);
+        string ganador = resolverganadoreliminacion(repo, local, visita, goleslocal, golesvisita);
 
-        if (goleslocal >= golesvisita) {
-            ganadores8[i] = local;
-        } else {
-            ganadores8[i] = visita;
-        }
+        partidosoctavos[i].setresultado(goleslocal, golesvisita);
+        ganadores8[i] = ganador;
     }
 
     cantcuartos = cantoctavos / 2;
@@ -1252,13 +1470,10 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
         int goleslocal = redondeargolespartido(lambdalocal);
         int golesvisita = redondeargolespartido(lambdavisita);
 
-        partidoscuartos[i].setresultado(goleslocal, golesvisita);
+        string ganador = resolverganadoreliminacion(repo, local, visita, goleslocal, golesvisita);
 
-        if (goleslocal >= golesvisita) {
-            ganadores4[i] = local;
-        } else {
-            ganadores4[i] = visita;
-        }
+        partidoscuartos[i].setresultado(goleslocal, golesvisita);
+        ganadores4[i] = ganador;
     }
 
     cantsemis = cantcuartos / 2;
@@ -1299,13 +1514,14 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
         int goleslocal = redondeargolespartido(lambdalocal);
         int golesvisita = redondeargolespartido(lambdavisita);
 
+        string ganador = resolverganadoreliminacion(repo, local, visita, goleslocal, golesvisita);
+
         partidossemis[i].setresultado(goleslocal, golesvisita);
 
-        if (goleslocal >= golesvisita) {
-            ganadores2[i] = local;
+        ganadores2[i] = ganador;
+        if (ganador == local) {
             perdedores2[i] = visita;
         } else {
-            ganadores2[i] = visita;
             perdedores2[i] = local;
         }
     }
@@ -1335,9 +1551,10 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
 
         int goleslocal = redondeargolespartido(calcularlambdapartido(gflocal, gcvisita));
         int golesvisita = redondeargolespartido(calcularlambdapartido(gfvisita, gclocal));
+        string ganador = resolverganadoreliminacion(repo, local, visita, goleslocal, golesvisita);
         partidofinal.setresultado(goleslocal, golesvisita);
 
-        if (goleslocal >= golesvisita) {
+        if (ganador == local) {
             equipocampeon = local;
             equiposubcampeon = visita;
         } else {
@@ -1368,9 +1585,10 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
 
         int goleslocal = redondeargolespartido(calcularlambdapartido(gflocal, gcvisita));
         int golesvisita = redondeargolespartido(calcularlambdapartido(gfvisita, gclocal));
+        string ganador = resolverganadoreliminacion(repo, local, visita, goleslocal, golesvisita);
         partidotercero.setresultado(goleslocal, golesvisita);
 
-        if (goleslocal >= golesvisita) {
+        if (ganador == local) {
             equipotercero = local;
             equipocuarto = visita;
         } else {
