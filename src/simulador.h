@@ -9,9 +9,7 @@ public:
     void probar(const Repositorio& repo);
 
 private:
-    double calculargolescalafavor(int ranking) const;
-    double calculargolescalacontra(int ranking) const;
-    double calcularlambda(int rankinga, int rankingb) const;
+    double calcularlambda(double golesfavora, double golescontrab) const;
     int redondeargoles(double lambda) const;
 };
 

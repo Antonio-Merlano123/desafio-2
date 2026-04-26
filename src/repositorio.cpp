@@ -145,6 +145,8 @@ Repositorio::Repositorio() {
         equiposcsv[i] = "";
         confederacionescsv[i] = "";
         rankingscsv[i] = 0;
+        golesfavorhistorico[i] = 0.0;
+        golescontrahistorico[i] = 0.0;
         inicioplantillas[i] = -1;
         cantidadplantillas[i] = 0;
     }
@@ -185,6 +187,8 @@ bool Repositorio::leercsvequipos(string ruta) {
         equiposcsv[i] = "";
         confederacionescsv[i] = "";
         rankingscsv[i] = 0;
+        golesfavorhistorico[i] = 0.0;
+        golescontrahistorico[i] = 0.0;
         inicioplantillas[i] = -1;
         cantidadplantillas[i] = 0;
     }
@@ -216,7 +220,7 @@ bool Repositorio::leercsvequipos(string ruta) {
         int totalcampos = partirlinea(linea, campos, 40);
 
         bool filavalida = true;
-        if (totalcampos < 5) {
+        if (totalcampos < 10) {
             filavalida = false;
         }
 
@@ -229,6 +233,20 @@ bool Repositorio::leercsvequipos(string ruta) {
             rankingscsv[pos] = textoaentero(campos[0]);
             equiposcsv[pos] = quitarlados(campos[1]);
             confederacionescsv[pos] = normalizarconfederacion(campos[4]);
+
+            int golesfavor = textoaentero(campos[5]);
+            int golescontra = textoaentero(campos[6]);
+            int ganados = textoaentero(campos[7]);
+            int empatados = textoaentero(campos[8]);
+            int perdidos = textoaentero(campos[9]);
+            int partidos = ganados + empatados + perdidos;
+
+            if (partidos <= 0) {
+                partidos = 1;
+            }
+
+            golesfavorhistorico[pos] = double(golesfavor) / double(partidos);
+            golescontrahistorico[pos] = double(golescontra) / double(partidos);
             cantidadequipos = pos + 1;
         }
 
@@ -290,6 +308,30 @@ int Repositorio::getranking(int indice) const {
     }
 
     return rankingscsv[indice];
+}
+
+double Repositorio::getgolesfavorhistorico(int indice) const {
+    if (indice < 0) {
+        return 0.0;
+    }
+
+    if (indice >= cantidadequipos) {
+        return 0.0;
+    }
+
+    return golesfavorhistorico[indice];
+}
+
+double Repositorio::getgolescontrahistorico(int indice) const {
+    if (indice < 0) {
+        return 0.0;
+    }
+
+    if (indice >= cantidadequipos) {
+        return 0.0;
+    }
+
+    return golescontrahistorico[indice];
 }
 
 jugador Repositorio::getjugador(int indice) const {

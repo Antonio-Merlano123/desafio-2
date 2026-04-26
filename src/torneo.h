@@ -24,8 +24,10 @@ public:
     bool cargarjugadorbase(jugador nuevojugador);
     bool armargruposporranking();
     bool generarcalendariogrupos();
+    bool elegironceinicial(string nombreequipo, jugador once[11]) const;
     void mostrargrupos() const;
     void mostrarcalendariogrupos() const;
+    void mostraronceprueba() const;
     int getequiposcargados() const;
     int getcantidadjugadores() const;
     int getcantidadgrupos() const;
@@ -52,6 +54,7 @@ private:
     void ordenarporelranking(int indices[], int total) const;
     int buscarhost(int indices[], int total) const;
     int buscarindiceequipo(string nombreequipo) const;
+    int buscarjugadoresdelequipo(string nombreequipo, int indices[], int maxindices) const;
     void barajarbombo(int bombo[], int inicio) const;
     bool intentarsorteo(int bombos[4][12]);
     bool generarcalendarioconlimite(int maxpartidospordia, int descansominimo);

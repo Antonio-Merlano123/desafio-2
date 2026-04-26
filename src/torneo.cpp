@@ -336,6 +336,27 @@ int Torneo::buscarindiceequipo(string nombreequipo) const {
     return -1;
 }
 
+int Torneo::buscarjugadoresdelequipo(string nombreequipo, int indices[], int maxindices) const {
+    if (jugadoresbase == 0) {
+        return 0;
+    }
+
+    int guardados = 0;
+
+    for (int i = 0; i < cantidadjugadores; i = i + 1) {
+        if (jugadoresbase[i].getequipo() != nombreequipo) {
+            continue;
+        }
+
+        if (guardados < maxindices) {
+            indices[guardados] = i;
+            guardados = guardados + 1;
+        }
+    }
+
+    return guardados;
+}
+
 void Torneo::barajarbombo(int bombo[], int inicio) const {
     for (int i = inicio; i < 12; i = i + 1) {
         int j = inicio + (rand() % (12 - inicio));
@@ -603,6 +624,28 @@ bool Torneo::generarcalendariogrupos() {
     return generarcalendarioconlimite(5, 2);
 }
 
+bool Torneo::elegironceinicial(string nombreequipo, jugador once[11]) const {
+    int indices[32];
+    int cantidad = buscarjugadoresdelequipo(nombreequipo, indices, 32);
+
+    if (cantidad < 11) {
+        return false;
+    }
+
+    for (int i = 0; i < cantidad; i = i + 1) {
+        int j = i + (rand() % (cantidad - i));
+        int temporal = indices[i];
+        indices[i] = indices[j];
+        indices[j] = temporal;
+    }
+
+    for (int i = 0; i < 11; i = i + 1) {
+        once[i] = jugadoresbase[indices[i]];
+    }
+
+    return true;
+}
+
 void Torneo::mostrarcalendariogrupos() const {
     if (cantidadpartidosgrupos <= 0) {
         return;
@@ -634,5 +677,40 @@ void Torneo::mostrarcalendariogrupos() const {
             cout << "  - " << partidosgrupos[i].getlocal();
             cout << " vs " << partidosgrupos[i].getvisita() << endl;
         }
+    }
+}
+
+void Torneo::mostraronceprueba() const {
+    if (cantidadpartidosgrupos <= 0) {
+        return;
+    }
+
+    string local = partidosgrupos[0].getlocal();
+    string visita = partidosgrupos[0].getvisita();
+
+    jugador oncelocal[11];
+    jugador oncevisita[11];
+
+    bool oklocal = elegironceinicial(local, oncelocal);
+    bool okvisita = elegironceinicial(visita, oncevisita);
+
+    if (oklocal == false || okvisita == false) {
+        cout << "once inicial prueba: fallo" << endl;
+        return;
+    }
+
+    cout << "once inicial prueba" << endl;
+    cout << "  partido: " << local << " vs " << visita << endl;
+
+    cout << "  titulares " << local << ":" << endl;
+    for (int i = 0; i < 11; i = i + 1) {
+        cout << "    - " << oncelocal[i].getnombre();
+        cout << " (" << oncelocal[i].getposicion() << ")" << endl;
+    }
+
+    cout << "  titulares " << visita << ":" << endl;
+    for (int i = 0; i < 11; i = i + 1) {
+        cout << "    - " << oncevisita[i].getnombre();
+        cout << " (" << oncevisita[i].getposicion() << ")" << endl;
     }
 }

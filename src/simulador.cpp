@@ -1,5 +1,6 @@
 #include "simulador.h"
 
+#include <cmath>
 #include <iostream>
 
 using namespace std;
@@ -7,59 +8,26 @@ using namespace std;
 Simulador::Simulador() {
 }
 
-double Simulador::calculargolescalafavor(int ranking) const {
-    if (ranking <= 0) {
-        return 1.4;
-    }
-
-    if (ranking <= 8) {
-        return 2.1;
-    }
-
-    if (ranking <= 20) {
-        return 1.8;
-    }
-
-    if (ranking <= 35) {
-        return 1.5;
-    }
-
-    return 1.3;
-}
-
-double Simulador::calculargolescalacontra(int ranking) const {
-    if (ranking <= 0) {
-        return 1.5;
-    }
-
-    if (ranking <= 8) {
-        return 0.9;
-    }
-
-    if (ranking <= 20) {
-        return 1.1;
-    }
-
-    if (ranking <= 35) {
-        return 1.4;
-    }
-
-    return 1.6;
-}
-
-double Simulador::calcularlambda(int rankinga, int rankingb) const {
+double Simulador::calcularlambda(double golesfavora, double golescontrab) const {
+    // Valores fijos del enunciado: se da un poco mas de peso al ataque que a la defensa.
     double alpha = 0.6;
     double beta = 0.4;
     double mu = 1.35;
 
-    double gfa = calculargolescalafavor(rankinga);
-    double gcb = calculargolescalacontra(rankingb);
+    double gfa = golesfavora;
+    double gcb = golescontrab;
 
-    if (gcb <= 0.0) {
-        gcb = 1.0;
+    if (gfa <= 0.0) {
+        gfa = mu;
     }
 
-    double lambda = alpha * (gfa / gcb) + beta * mu;
+    if (gcb <= 0.0) {
+        gcb = mu;
+    }
+
+    double factorataque = pow(gfa / mu, alpha);
+    double factordefensa = pow(gcb / mu, beta);
+    double lambda = mu * factorataque * factordefensa;
 
     if (lambda < 0.2) {
         lambda = 0.2;
@@ -87,18 +55,20 @@ void Simulador::probar(const Repositorio& repo) {
 
     string equipoa = repo.getequipo(0);
     string equipob = repo.getequipo(1);
-    int rankinga = repo.getranking(0);
-    int rankingb = repo.getranking(1);
+    double gfahistorico = repo.getgolesfavorhistorico(0);
+    double gcbhistorico = repo.getgolescontrahistorico(1);
+    double gfbhistorico = repo.getgolesfavorhistorico(1);
+    double gcahistorico = repo.getgolescontrahistorico(0);
 
-    double lambdaa = calcularlambda(rankinga, rankingb);
-    double lambdab = calcularlambda(rankingb, rankinga);
+    double lambdaa = calcularlambda(gfahistorico, gcbhistorico);
+    double lambdab = calcularlambda(gfbhistorico, gcahistorico);
 
     int golesa = redondeargoles(lambdaa);
     int golesb = redondeargoles(lambdab);
 
     cout << "lambda base prueba" << endl;
     cout << "  " << equipoa << " vs " << equipob << endl;
-    cout << "  lambda " << equipoa << ": " << lambdaa << endl;
-    cout << "  lambda " << equipob << ": " << lambdab << endl;
+    cout << "  promedio de gol (\u03BB) " << equipoa << ": " << lambdaa << endl;
+    cout << "  promedio de gol (\u03BB) " << equipob << ": " << lambdab << endl;
     cout << "  marcador estimado: " << golesa << " - " << golesb << endl;
 }

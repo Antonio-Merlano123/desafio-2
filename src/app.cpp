@@ -63,6 +63,9 @@ void App::iniciar() {
         torneo.mostrarcalendariogrupos();
     }
     cout << "jugadores base cargados: " << jugadorescargados << endl;
+    if (calendariook && jugadorescargados > 0) {
+        torneo.mostraronceprueba();
+    }
     sim.probar(repo);
     med.mostrar();
 }
