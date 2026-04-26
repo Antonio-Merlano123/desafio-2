@@ -29,9 +29,11 @@ public:
     bool generarcalendariogrupos();
     bool elegironceinicial(string nombreequipo, jugador once[11]) const;
     bool simularfasegrupos(const Repositorio& repo);
+    void mostrarresultadosfasegrupos() const;
     void clasificargrupos();
     void armardieciseisavos();
     bool simularfasesfinales(const Repositorio& repo);
+    bool guardarhistoricoactualizado(const Repositorio& repo) const;
     void mostrargrupos() const;
     void mostrarcalendariogrupos() const;
     void mostraronceprueba() const;
@@ -98,15 +100,20 @@ private:
     int buscarindiceequiporepo(const Repositorio& repo, string nombreequipo) const;
     int buscarjugadoresdelequipo(string nombreequipo, int indices[], int maxindices) const;
     bool elegironceindices(string nombreequipo, int onceindices[11]) const;
-    void actualizarestadisticasjugadorespartido(int onceindices[11], int golesafavor, int minutos);
+    void actualizarestadisticasjugadorespartido(int onceindices[11], int golesafavor, int minutos, partido& partidoref, bool eslocal);
     double calcularlambdapartido(double golesfavora, double golescontrab) const;
     int redondeargolespartido(double lambda) const;
+    int calcularposesionlocal(int rankinglocal, int rankingvisita) const;
     string resolverganadoreliminacion(const Repositorio& repo, string local, string visita, int& goleslocal, int& golesvisita) const;
     void ordenarfilasgrupo(int filas[4]) const;
     void barajarbombo(int bombo[], int inicio) const;
     bool intentarsorteo(int bombos[4][12]);
     bool generarcalendarioconlimite(int maxpartidospordia, int descansominimo);
+    string construirfechagrupos(int dia) const;
+    void imprimirgoleadorescamisetas(const partido& p) const;
+    void imprimirdatospartido(const partido& p, bool conmarcador) const;
     int contargolestorneoequipo(string nombreequipo) const;
+    int contargolesrecibidostorneoequipo(string nombreequipo) const;
     string confederacionconmayorpresencia(const Repositorio& repo, const partido* partidos, int cantidad) const;
 };
 

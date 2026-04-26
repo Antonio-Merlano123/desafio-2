@@ -360,39 +360,37 @@ void Repositorio::armarplantillasbase() {
     for (int i = 0; i < cantidadequipos; i = i + 1) {
         inicioplantillas[i] = cantidadjugadores;
         cantidadplantillas[i] = 0;
-
         int q = 0;
         while (q < 2) {
-            string nombre = equiposcsv[i] + " arquero ";
-            nombre = nombre + char('1' + q);
+            int camiseta = q + 1;
+            string nombre = "nombre" + to_string(camiseta) + " apellido" + to_string(camiseta);
             agregarjugadorbase(i, nombre, "arquero");
             q = q + 1;
         }
 
         int d = 0;
         while (d < 5) {
-            string nombre = equiposcsv[i] + " defensa ";
-            nombre = nombre + char('1' + d);
+            int camiseta = d + 3;
+            string nombre = "nombre" + to_string(camiseta) + " apellido" + to_string(camiseta);
             agregarjugadorbase(i, nombre, "defensa");
             d = d + 1;
         }
 
         int v = 0;
         while (v < 5) {
-            string nombre = equiposcsv[i] + " volante ";
-            nombre = nombre + char('1' + v);
+            int camiseta = v + 8;
+            string nombre = "nombre" + to_string(camiseta) + " apellido" + to_string(camiseta);
             agregarjugadorbase(i, nombre, "volante");
             v = v + 1;
         }
 
         int f = 0;
         while (f < 3) {
-            string nombre = equiposcsv[i] + " delantero ";
-            nombre = nombre + char('1' + f);
+            int camiseta = f + 13;
+            string nombre = "nombre" + to_string(camiseta) + " apellido" + to_string(camiseta);
             agregarjugadorbase(i, nombre, "delantero");
             f = f + 1;
         }
-
         int golesbase = calculargolesbase(rankingscsv[i]);
         repartirgolesbase(i, golesbase);
     }

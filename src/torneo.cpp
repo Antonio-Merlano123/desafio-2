@@ -45,6 +45,19 @@ static bool eshostmundial(string nombreequipo) {
     return false;
 }
 
+static string dosdigitos(int numero) {
+    if (numero < 10) {
+        return string("0") + char('0' + numero);
+    }
+
+    int decenas = numero / 10;
+    int unidades = numero % 10;
+    string texto = "";
+    texto = texto + char('0' + decenas);
+    texto = texto + char('0' + unidades);
+    return texto;
+}
+
 // arranco todo en 0 para que el destructor no intente liberar punteros basura
 // la semilla basada en la hora hace que cada ejecucion de resultados distintos
 Torneo::Torneo() {
@@ -432,33 +445,16 @@ int Torneo::buscarjugadoresdelequipo(string nombreequipo, int indices[], int max
     return guardados;
 }
 
-// formula del enunciado: lambda = mu * (GF/mu)^alpha * (GCrival/mu)^beta
-// cuanto mas goles hace el equipo y mas recibe el rival, mayor el lambda esperado
+// calculo de gol esperado: si un equipo ataca mejor y el rival defiende peor,
+// el valor de lambda sube
 double Torneo::calcularlambdapartido(double golesfavora, double golescontrab) const {
     double alpha = 0.6;  // el ataque propio pesa un poco mas
     double beta = 0.4;
     double mu = 1.35;    // promedio historico de goles en mundiales
 
-    double gfa = golesfavora;
-    double gcb = golescontrab;
-
-    // si no tiene datos historicos uso el promedio mundial
-    if (gfa <= 0.0) {
-        gfa = mu;
-    }
-
-    if (gcb <= 0.0) {
-        gcb = mu;
-    }
-
-    double factorataque = pow(gfa / mu, alpha);
-    double factordefensa = pow(gcb / mu, beta);
+    double factorataque = pow(golesfavora / mu, alpha);
+    double factordefensa = pow(golescontrab / mu, beta);
     double lambda = mu * factorataque * factordefensa;
-
-    // piso minimo para que siempre haya algo de chance de marcar
-    if (lambda < 0.2) {
-        lambda = 0.2;
-    }
 
     return lambda;
 }
@@ -498,6 +494,43 @@ int Torneo::redondeargolespartido(double lambda) const {
     }
 
     return goles;
+}
+
+int Torneo::calcularposesionlocal(int rankinglocal, int rankingvisita) const {
+    if (rankinglocal <= 0 || rankingvisita <= 0) {
+        return 50;
+    }
+
+    double fuerzalocal = 1.0 / double(rankinglocal);
+    double fuerzavisita = 1.0 / double(rankingvisita);
+    double total = fuerzalocal + fuerzavisita;
+    if (total <= 0.0) {
+        return 50;
+    }
+
+    int posesion = int((100.0 * fuerzalocal / total) + 0.5);
+    if (posesion < 30) {
+        posesion = 30;
+    }
+    if (posesion > 70) {
+        posesion = 70;
+    }
+    return posesion;
+}
+
+string Torneo::construirfechagrupos(int dia) const {
+    int diareal = 20 + dia;
+    int mes = 6;
+    if (diareal > 30) {
+        diareal = diareal - 30;
+        mes = 7;
+    }
+
+    string fecha = dosdigitos(diareal);
+    fecha = fecha + "/";
+    fecha = fecha + dosdigitos(mes);
+    fecha = fecha + "/2026";
+    return fecha;
 }
 
 // ordena las 4 filas del grupo: primero por puntos, luego diferencia, luego goles favor
@@ -783,6 +816,12 @@ bool Torneo::generarcalendarioconlimite(int maxpartidospordia, int descansominim
             }
 
             partidosgrupos[cantidadpartidosgrupos] = partido(local[m], visita[m]);
+            partidosgrupos[cantidadpartidosgrupos].configurarcontexto("nombreSede",
+                                                                       "codArbitro1",
+                                                                       "codArbitro2",
+                                                                       "codArbitro3",
+                                                                       "00:00",
+                                                                       construirfechagrupos(diaelegido));
             diapartidosgrupos[cantidadpartidosgrupos] = diaelegido;
             cantidadpartidosgrupos = cantidadpartidosgrupos + 1;
 
@@ -796,16 +835,20 @@ bool Torneo::generarcalendarioconlimite(int maxpartidospordia, int descansominim
 }
 
 bool Torneo::generarcalendariogrupos() {
+    // con 48 equipos hay 72 partidos; en 17 dias a maximo 4 por dia solo caben 68.
+    // por eso, si falla el modo estricto, se usa 5 por dia manteniendo descanso de 3 dias.
     bool okestricto = generarcalendarioconlimite(4, 3);
     if (okestricto) {
         return true;
     }
 
-    bool okintermedio = generarcalendarioconlimite(5, 3);
-    if (okintermedio) {
+    cout << "nota calendario: 72 partidos en 17 dias requiere al menos 5 partidos en algunos dias" << endl;
+    bool okcinco = generarcalendarioconlimite(5, 3);
+    if (okcinco) {
         return true;
     }
 
+    cout << "nota calendario: para evitar bloqueo se relaja descanso minimo a 2 dias" << endl;
     return generarcalendarioconlimite(5, 2);
 }
 
@@ -853,6 +896,10 @@ bool Torneo::simularfasegrupos(const Repositorio& repo) {
         int goleslocal = redondeargolespartido(lambdalocal);
         int golesvisita = redondeargolespartido(lambdavisita);
 
+        int rankinglocal = repo.getranking(ilocalrepo);
+        int rankingvisita = repo.getranking(ivisitarepo);
+        partidosgrupos[i].setposesionlocal(calcularposesionlocal(rankinglocal, rankingvisita));
+        partidosgrupos[i].limpiargoleadores();
         partidosgrupos[i].setresultado(goleslocal, golesvisita);
 
         int oncelocalidx[11];
@@ -864,8 +911,8 @@ bool Torneo::simularfasegrupos(const Repositorio& repo) {
         }
 
         // actualizo estadisticas de los 22 jugadores que jugaron
-        actualizarestadisticasjugadorespartido(oncelocalidx, goleslocal, 90);
-        actualizarestadisticasjugadorespartido(oncevisitaidx, golesvisita, 90);
+        actualizarestadisticasjugadorespartido(oncelocalidx, goleslocal, 90, partidosgrupos[i], true);
+        actualizarestadisticasjugadorespartido(oncevisitaidx, golesvisita, 90, partidosgrupos[i], false);
 
         // actualizo la tabla del grupo
         tabla[ilocaltabla].sumargoles(goleslocal, golesvisita);
@@ -926,7 +973,7 @@ bool Torneo::elegironceindices(string nombreequipo, int onceindices[11]) const {
 
 // actualiza goles, asistencias, tarjetas y faltas de los 11 jugadores del partido
 // goles se distribuyen uniformemente entre el once (segun enunciado del profe)
-void Torneo::actualizarestadisticasjugadorespartido(int onceindices[11], int golesafavor, int minutos) {
+void Torneo::actualizarestadisticasjugadorespartido(int onceindices[11], int golesafavor, int minutos, partido& partidoref, bool eslocal) {
     if (jugadoresbase == 0) {
         return;
     }
@@ -971,15 +1018,61 @@ void Torneo::actualizarestadisticasjugadorespartido(int onceindices[11], int gol
         }
     }
 
-    // cada gol va a un jugador al azar del once (distribucion uniforme como pide el enunciado)
-    for (int g = 0; g < golesafavor; g = g + 1) {
-        int anotadorpos = rand() % 11;
-        int anotadoridx = onceindices[anotadorpos];
-        if (anotadoridx >= 0 && anotadoridx < cantidadjugadores) {
+    // regla del enunciado: evento de gol por jugador con probabilidad base del 4%
+    int golesasignados = 0;
+    int rondas = 0;
+
+    while (golesasignados < golesafavor && rondas < 200) {
+        for (int i = 0; i < 11 && golesasignados < golesafavor; i = i + 1) {
+            int r = rand() % 100;
+            if (r >= 4) {
+                continue;
+            }
+
+            int anotadoridx = onceindices[i];
+            if (anotadoridx < 0 || anotadoridx >= cantidadjugadores) {
+                continue;
+            }
+
             jugadoresbase[anotadoridx].agregargol();
+            int camiseta = jugadoresbase[anotadoridx].getcamiseta();
+            if (eslocal) {
+                partidoref.agregargoleadorlocal(camiseta);
+            } else {
+                partidoref.agregargoleadorvisita(camiseta);
+            }
+
+            int asistpos = rand() % 11;
+            if (asistpos == i) {
+                asistpos = (asistpos + 1) % 11;
+            }
+            int asistidx = onceindices[asistpos];
+            if (asistidx >= 0 && asistidx < cantidadjugadores) {
+                jugadoresbase[asistidx].agregarasistencia();
+            }
+
+            golesasignados = golesasignados + 1;
         }
 
-        // asistencia a un jugador distinto del que metio el gol
+        rondas = rondas + 1;
+    }
+
+    // fallback para garantizar que se registren todos los goles del marcador
+    while (golesasignados < golesafavor) {
+        int anotadorpos = rand() % 11;
+        int anotadoridx = onceindices[anotadorpos];
+        if (anotadoridx < 0 || anotadoridx >= cantidadjugadores) {
+            continue;
+        }
+
+        jugadoresbase[anotadoridx].agregargol();
+        int camiseta = jugadoresbase[anotadoridx].getcamiseta();
+        if (eslocal) {
+            partidoref.agregargoleadorlocal(camiseta);
+        } else {
+            partidoref.agregargoleadorvisita(camiseta);
+        }
+
         int asistpos = rand() % 11;
         if (asistpos == anotadorpos) {
             asistpos = (asistpos + 1) % 11;
@@ -988,6 +1081,47 @@ void Torneo::actualizarestadisticasjugadorespartido(int onceindices[11], int gol
         if (asistidx >= 0 && asistidx < cantidadjugadores) {
             jugadoresbase[asistidx].agregarasistencia();
         }
+
+        golesasignados = golesasignados + 1;
+    }
+}
+
+void Torneo::imprimirgoleadorescamisetas(const partido& p) const {
+    cout << "    goleadores local (camisetas): ";
+    if (p.getcantgoleadoreslocal() == 0) {
+        cout << "ninguno";
+    } else {
+        for (int i = 0; i < p.getcantgoleadoreslocal(); i = i + 1) {
+            if (i > 0) {
+                cout << ", ";
+            }
+            cout << p.getgoleadorlocal(i);
+        }
+    }
+    cout << endl;
+
+    cout << "    goleadores visita (camisetas): ";
+    if (p.getcantgoleadoresvisita() == 0) {
+        cout << "ninguno";
+    } else {
+        for (int i = 0; i < p.getcantgoleadoresvisita(); i = i + 1) {
+            if (i > 0) {
+                cout << ", ";
+            }
+            cout << p.getgoleadorvisita(i);
+        }
+    }
+    cout << endl;
+}
+
+void Torneo::imprimirdatospartido(const partido& p, bool conmarcador) const {
+    cout << "    sede: " << p.getsede() << endl;
+    cout << "    arbitros: " << p.getarbitro(0) << ", " << p.getarbitro(1) << ", " << p.getarbitro(2) << endl;
+    cout << "    fecha: " << p.getfecha() << " hora: " << p.gethora() << endl;
+    cout << "    posesion: " << p.getposesionlocal() << "% - " << p.getposesionvisita() << "%" << endl;
+    if (conmarcador) {
+        cout << "    marcador: " << p.getlocal() << " " << p.getgoleslocal() << " - " << p.getgolesvisita() << " " << p.getvisita() << endl;
+        imprimirgoleadorescamisetas(p);
     }
 }
 
@@ -1021,7 +1155,20 @@ void Torneo::mostrarcalendariogrupos() const {
 
             cout << "  - " << partidosgrupos[i].getlocal();
             cout << " vs " << partidosgrupos[i].getvisita() << endl;
+            imprimirdatospartido(partidosgrupos[i], false);
         }
+    }
+}
+
+void Torneo::mostrarresultadosfasegrupos() const {
+    if (cantidadpartidosgrupos <= 0) {
+        return;
+    }
+
+    cout << "resultados fase de grupos" << endl;
+    for (int i = 0; i < cantidadpartidosgrupos; i = i + 1) {
+        cout << "  partido " << (i + 1) << endl;
+        imprimirdatospartido(partidosgrupos[i], true);
     }
 }
 
@@ -1492,7 +1639,6 @@ string Torneo::resolverganadoreliminacion(const Repositorio& repo, string local,
 
         double sesgo = double(diferencia) / 220.0;  // normalizo entre -1 y 1
         // limito el sesgo a +/-35% para que ninguno sea favorito aplastante
-    // limito el sesgo a +/-35% para que ninguno sea favorito aplastante
         if (sesgo > 0.35) {
             sesgo = 0.35;
         }
@@ -1554,6 +1700,9 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
         string local = partidosdieciseisavos[i].getlocal();
         string visita = partidosdieciseisavos[i].getvisita();
 
+        partidosdieciseisavos[i].configurarcontexto("nombreSede", "codArbitro1", "codArbitro2", "codArbitro3", "00:00", "01/01/2026");
+        partidosdieciseisavos[i].limpiargoleadores();
+
         int ilocal = buscarindiceequiporepo(repo, local);
         int ivisita = buscarindiceequiporepo(repo, visita);
 
@@ -1570,6 +1719,8 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
             gfvisita = repo.getgolesfavorhistorico(ivisita);
             gcvisita = repo.getgolescontrahistorico(ivisita);
         }
+
+        partidosdieciseisavos[i].setposesionlocal(calcularposesionlocal(repo.getranking(ilocal), repo.getranking(ivisita)));
 
         double lambdalocal = calcularlambdapartido(gflocal, gcvisita);
         double lambdavisita = calcularlambdapartido(gfvisita, gclocal);
@@ -1591,8 +1742,8 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
             return false;
         }
 
-        actualizarestadisticasjugadorespartido(oncelocalidx, goleslocal, minutospartido);
-        actualizarestadisticasjugadorespartido(oncevisitaidx, golesvisita, minutospartido);
+        actualizarestadisticasjugadorespartido(oncelocalidx, goleslocal, minutospartido, partidosdieciseisavos[i], true);
+        actualizarestadisticasjugadorespartido(oncevisitaidx, golesvisita, minutospartido, partidosdieciseisavos[i], false);
 
         partidosdieciseisavos[i].setresultado(goleslocal, golesvisita);
         ganadores16[i] = ganador;
@@ -1613,6 +1764,9 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
         string local = partidosoctavos[i].getlocal();
         string visita = partidosoctavos[i].getvisita();
 
+        partidosoctavos[i].configurarcontexto("nombreSede", "codArbitro1", "codArbitro2", "codArbitro3", "00:00", "01/01/2026");
+        partidosoctavos[i].limpiargoleadores();
+
         int ilocal = buscarindiceequiporepo(repo, local);
         int ivisita = buscarindiceequiporepo(repo, visita);
 
@@ -1629,6 +1783,8 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
             gfvisita = repo.getgolesfavorhistorico(ivisita);
             gcvisita = repo.getgolescontrahistorico(ivisita);
         }
+
+        partidosoctavos[i].setposesionlocal(calcularposesionlocal(repo.getranking(ilocal), repo.getranking(ivisita)));
 
         double lambdalocal = calcularlambdapartido(gflocal, gcvisita);
         double lambdavisita = calcularlambdapartido(gfvisita, gclocal);
@@ -1650,8 +1806,8 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
             return false;
         }
 
-        actualizarestadisticasjugadorespartido(oncelocalidx, goleslocal, minutospartido);
-        actualizarestadisticasjugadorespartido(oncevisitaidx, golesvisita, minutospartido);
+        actualizarestadisticasjugadorespartido(oncelocalidx, goleslocal, minutospartido, partidosoctavos[i], true);
+        actualizarestadisticasjugadorespartido(oncevisitaidx, golesvisita, minutospartido, partidosoctavos[i], false);
 
         partidosoctavos[i].setresultado(goleslocal, golesvisita);
         ganadores8[i] = ganador;
@@ -1672,6 +1828,9 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
         string local = partidoscuartos[i].getlocal();
         string visita = partidoscuartos[i].getvisita();
 
+        partidoscuartos[i].configurarcontexto("nombreSede", "codArbitro1", "codArbitro2", "codArbitro3", "00:00", "01/01/2026");
+        partidoscuartos[i].limpiargoleadores();
+
         int ilocal = buscarindiceequiporepo(repo, local);
         int ivisita = buscarindiceequiporepo(repo, visita);
 
@@ -1688,6 +1847,8 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
             gfvisita = repo.getgolesfavorhistorico(ivisita);
             gcvisita = repo.getgolescontrahistorico(ivisita);
         }
+
+        partidoscuartos[i].setposesionlocal(calcularposesionlocal(repo.getranking(ilocal), repo.getranking(ivisita)));
 
         double lambdalocal = calcularlambdapartido(gflocal, gcvisita);
         double lambdavisita = calcularlambdapartido(gfvisita, gclocal);
@@ -1709,8 +1870,8 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
             return false;
         }
 
-        actualizarestadisticasjugadorespartido(oncelocalidx, goleslocal, minutospartido);
-        actualizarestadisticasjugadorespartido(oncevisitaidx, golesvisita, minutospartido);
+        actualizarestadisticasjugadorespartido(oncelocalidx, goleslocal, minutospartido, partidoscuartos[i], true);
+        actualizarestadisticasjugadorespartido(oncevisitaidx, golesvisita, minutospartido, partidoscuartos[i], false);
 
         partidoscuartos[i].setresultado(goleslocal, golesvisita);
         ganadores4[i] = ganador;
@@ -1732,6 +1893,9 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
         string local = partidossemis[i].getlocal();
         string visita = partidossemis[i].getvisita();
 
+        partidossemis[i].configurarcontexto("nombreSede", "codArbitro1", "codArbitro2", "codArbitro3", "00:00", "01/01/2026");
+        partidossemis[i].limpiargoleadores();
+
         int ilocal = buscarindiceequiporepo(repo, local);
         int ivisita = buscarindiceequiporepo(repo, visita);
 
@@ -1748,6 +1912,8 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
             gfvisita = repo.getgolesfavorhistorico(ivisita);
             gcvisita = repo.getgolescontrahistorico(ivisita);
         }
+
+        partidossemis[i].setposesionlocal(calcularposesionlocal(repo.getranking(ilocal), repo.getranking(ivisita)));
 
         double lambdalocal = calcularlambdapartido(gflocal, gcvisita);
         double lambdavisita = calcularlambdapartido(gfvisita, gclocal);
@@ -1768,8 +1934,8 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
             return false;
         }
 
-        actualizarestadisticasjugadorespartido(oncelocalidx, goleslocal, minutospartido);
-        actualizarestadisticasjugadorespartido(oncevisitaidx, golesvisita, minutospartido);
+        actualizarestadisticasjugadorespartido(oncelocalidx, goleslocal, minutospartido, partidossemis[i], true);
+        actualizarestadisticasjugadorespartido(oncevisitaidx, golesvisita, minutospartido, partidossemis[i], false);
 
         partidossemis[i].setresultado(goleslocal, golesvisita);
 
@@ -1787,6 +1953,8 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
     {
         string local = partidofinal.getlocal();
         string visita = partidofinal.getvisita();
+        partidofinal.configurarcontexto("nombreSede", "codArbitro1", "codArbitro2", "codArbitro3", "00:00", "01/01/2026");
+        partidofinal.limpiargoleadores();
         int ilocal = buscarindiceequiporepo(repo, local);
         int ivisita = buscarindiceequiporepo(repo, visita);
 
@@ -1804,6 +1972,8 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
             gcvisita = repo.getgolescontrahistorico(ivisita);
         }
 
+        partidofinal.setposesionlocal(calcularposesionlocal(repo.getranking(ilocal), repo.getranking(ivisita)));
+
         int goleslocal = redondeargolespartido(calcularlambdapartido(gflocal, gcvisita));
         int golesvisita = redondeargolespartido(calcularlambdapartido(gfvisita, gclocal));
         int minutospartido = 90;
@@ -1820,8 +1990,8 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
             return false;
         }
 
-        actualizarestadisticasjugadorespartido(oncelocalidx, goleslocal, minutospartido);
-        actualizarestadisticasjugadorespartido(oncevisitaidx, golesvisita, minutospartido);
+        actualizarestadisticasjugadorespartido(oncelocalidx, goleslocal, minutospartido, partidofinal, true);
+        actualizarestadisticasjugadorespartido(oncevisitaidx, golesvisita, minutospartido, partidofinal, false);
 
         partidofinal.setresultado(goleslocal, golesvisita);
 
@@ -1837,6 +2007,8 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
     {
         string local = partidotercero.getlocal();
         string visita = partidotercero.getvisita();
+        partidotercero.configurarcontexto("nombreSede", "codArbitro1", "codArbitro2", "codArbitro3", "00:00", "01/01/2026");
+        partidotercero.limpiargoleadores();
         int ilocal = buscarindiceequiporepo(repo, local);
         int ivisita = buscarindiceequiporepo(repo, visita);
 
@@ -1854,6 +2026,8 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
             gcvisita = repo.getgolescontrahistorico(ivisita);
         }
 
+        partidotercero.setposesionlocal(calcularposesionlocal(repo.getranking(ilocal), repo.getranking(ivisita)));
+
         int goleslocal = redondeargolespartido(calcularlambdapartido(gflocal, gcvisita));
         int golesvisita = redondeargolespartido(calcularlambdapartido(gfvisita, gclocal));
         int minutospartido = 90;
@@ -1870,8 +2044,8 @@ bool Torneo::simularfasesfinales(const Repositorio& repo) {
             return false;
         }
 
-        actualizarestadisticasjugadorespartido(oncelocalidx, goleslocal, minutospartido);
-        actualizarestadisticasjugadorespartido(oncevisitaidx, golesvisita, minutospartido);
+        actualizarestadisticasjugadorespartido(oncelocalidx, goleslocal, minutospartido, partidotercero, true);
+        actualizarestadisticasjugadorespartido(oncevisitaidx, golesvisita, minutospartido, partidotercero, false);
 
         partidotercero.setresultado(goleslocal, golesvisita);
 
@@ -1896,47 +2070,33 @@ void Torneo::mostrarfasesfinales() const {
 
     cout << "resultados dieciseisavos" << endl;
     for (int i = 0; i < cantdieciseisavos; i = i + 1) {
-        cout << "  " << partidosdieciseisavos[i].getlocal() << " "
-             << partidosdieciseisavos[i].getgoleslocal() << " - "
-             << partidosdieciseisavos[i].getgolesvisita() << " "
-             << partidosdieciseisavos[i].getvisita() << endl;
+        cout << "  partido " << (i + 1) << endl;
+        imprimirdatospartido(partidosdieciseisavos[i], true);
     }
 
     cout << "resultados octavos" << endl;
     for (int i = 0; i < cantoctavos; i = i + 1) {
-        cout << "  " << partidosoctavos[i].getlocal() << " "
-             << partidosoctavos[i].getgoleslocal() << " - "
-             << partidosoctavos[i].getgolesvisita() << " "
-             << partidosoctavos[i].getvisita() << endl;
+        cout << "  partido " << (i + 1) << endl;
+        imprimirdatospartido(partidosoctavos[i], true);
     }
 
     cout << "resultados cuartos" << endl;
     for (int i = 0; i < cantcuartos; i = i + 1) {
-        cout << "  " << partidoscuartos[i].getlocal() << " "
-             << partidoscuartos[i].getgoleslocal() << " - "
-             << partidoscuartos[i].getgolesvisita() << " "
-             << partidoscuartos[i].getvisita() << endl;
+        cout << "  partido " << (i + 1) << endl;
+        imprimirdatospartido(partidoscuartos[i], true);
     }
 
     cout << "resultados semifinales" << endl;
     for (int i = 0; i < cantsemis; i = i + 1) {
-        cout << "  " << partidossemis[i].getlocal() << " "
-             << partidossemis[i].getgoleslocal() << " - "
-             << partidossemis[i].getgolesvisita() << " "
-             << partidossemis[i].getvisita() << endl;
+           cout << "  partido " << (i + 1) << endl;
+           imprimirdatospartido(partidossemis[i], true);
     }
 
     cout << "tercer puesto" << endl;
-    cout << "  " << partidotercero.getlocal() << " "
-         << partidotercero.getgoleslocal() << " - "
-         << partidotercero.getgolesvisita() << " "
-         << partidotercero.getvisita() << endl;
+        imprimirdatospartido(partidotercero, true);
 
     cout << "final" << endl;
-    cout << "  " << partidofinal.getlocal() << " "
-         << partidofinal.getgoleslocal() << " - "
-         << partidofinal.getgolesvisita() << " "
-         << partidofinal.getvisita() << endl;
+        imprimirdatospartido(partidofinal, true);
 
     cout << "podio" << endl;
     cout << "  campeon: " << equipocampeon << endl;
@@ -2013,6 +2173,106 @@ int Torneo::contargolestorneoequipo(string nombreequipo) const {
     }
 
     return total;
+}
+
+int Torneo::contargolesrecibidostorneoequipo(string nombreequipo) const {
+    int total = 0;
+
+    for (int i = 0; i < cantidadpartidosgrupos; i = i + 1) {
+        if (partidosgrupos[i].getlocal() == nombreequipo) {
+            total = total + partidosgrupos[i].getgolesvisita();
+        }
+        if (partidosgrupos[i].getvisita() == nombreequipo) {
+            total = total + partidosgrupos[i].getgoleslocal();
+        }
+    }
+
+    for (int i = 0; i < cantdieciseisavos; i = i + 1) {
+        if (partidosdieciseisavos[i].getlocal() == nombreequipo) {
+            total = total + partidosdieciseisavos[i].getgolesvisita();
+        }
+        if (partidosdieciseisavos[i].getvisita() == nombreequipo) {
+            total = total + partidosdieciseisavos[i].getgoleslocal();
+        }
+    }
+
+    for (int i = 0; i < cantoctavos; i = i + 1) {
+        if (partidosoctavos[i].getlocal() == nombreequipo) {
+            total = total + partidosoctavos[i].getgolesvisita();
+        }
+        if (partidosoctavos[i].getvisita() == nombreequipo) {
+            total = total + partidosoctavos[i].getgoleslocal();
+        }
+    }
+
+    for (int i = 0; i < cantcuartos; i = i + 1) {
+        if (partidoscuartos[i].getlocal() == nombreequipo) {
+            total = total + partidoscuartos[i].getgolesvisita();
+        }
+        if (partidoscuartos[i].getvisita() == nombreequipo) {
+            total = total + partidoscuartos[i].getgoleslocal();
+        }
+    }
+
+    for (int i = 0; i < cantsemis; i = i + 1) {
+        if (partidossemis[i].getlocal() == nombreequipo) {
+            total = total + partidossemis[i].getgolesvisita();
+        }
+        if (partidossemis[i].getvisita() == nombreequipo) {
+            total = total + partidossemis[i].getgoleslocal();
+        }
+    }
+
+    if (partidofinal.sejugo()) {
+        if (partidofinal.getlocal() == nombreequipo) {
+            total = total + partidofinal.getgolesvisita();
+        }
+        if (partidofinal.getvisita() == nombreequipo) {
+            total = total + partidofinal.getgoleslocal();
+        }
+    }
+
+    if (partidotercero.sejugo()) {
+        if (partidotercero.getlocal() == nombreequipo) {
+            total = total + partidotercero.getgolesvisita();
+        }
+        if (partidotercero.getvisita() == nombreequipo) {
+            total = total + partidotercero.getgoleslocal();
+        }
+    }
+
+    return total;
+}
+
+bool Torneo::guardarhistoricoactualizado(const Repositorio& repo) const {
+    if (cantidadequiposbase <= 0 || cantidadjugadores <= 0 || jugadoresbase == 0) {
+        return false;
+    }
+
+    int golesfavoractualizados[64];
+    int golescontraactualizados[64];
+
+    int limite = repo.getcantidadequipos();
+    if (limite > 64) {
+        limite = 64;
+    }
+
+    for (int i = 0; i < limite; i = i + 1) {
+        string equipo = repo.getequipo(i);
+        golesfavoractualizados[i] = repo.getgolesfavorhistoricototal(i) + contargolestorneoequipo(equipo);
+        golescontraactualizados[i] = repo.getgolescontrahistoricototal(i) + contargolesrecibidostorneoequipo(equipo);
+    }
+
+    bool okequipos = repo.guardarequiposhistoricoactualizado(golesfavoractualizados,
+                                                              golescontraactualizados,
+                                                              limite,
+                                                              "../../../equipos_historico_actualizado.csv");
+
+    bool okjugadores = repo.guardarjugadoreshistoricoactualizado(jugadoresbase,
+                                                                  cantidadjugadores,
+                                                                  "../../../jugadores_historico_actualizado.csv");
+
+    return okequipos && okjugadores;
 }
 
 // retorna la confederacion con mas equipos en una ronda, sin contar el mismo equipo dos veces
@@ -2135,7 +2395,6 @@ void Torneo::mostrarinformeestadisticas(const Repositorio& repo) const {
     // top 3 goleadores del torneo completo
     int top[3];
     for (int i = 0; i < 3; i = i + 1) {
-        top[i] = -1;  // -1 indica que la posicion esta vacia
         top[i] = -1;
     }
 
@@ -2163,13 +2422,13 @@ void Torneo::mostrarinformeestadisticas(const Repositorio& repo) const {
              << jugadoresbase[top[i]].getgoles() << " goles)" << endl;
     }
 
-    // combino el historial del csv con los goles del torneo para comparar equipos
+    // historial actualizado = goles historicos totales del csv + goles anotados en esta copa
     string mejorequipo = "sin datos";
     int mejorgoles = -1;
 
     for (int i = 0; i < repo.getcantidadequipos(); i = i + 1) {
-        int basehistoricoestimado = int((repo.getgolesfavorhistorico(i) * 100.0) + 0.5);  // escalo pa comparar
-        int totalactualizado = basehistoricoestimado + contargolestorneoequipo(repo.getequipo(i));
+        int basehistoricototal = repo.getgolesfavorhistoricototal(i);
+        int totalactualizado = basehistoricototal + contargolestorneoequipo(repo.getequipo(i));
 
         if (totalactualizado > mejorgoles) {
             mejorgoles = totalactualizado;

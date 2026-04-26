@@ -85,6 +85,7 @@ void App::iniciar() {
         cout << "simulacion grupos: " << (simgruposok ? "ok" : "fallo") << endl;
 
         if (simgruposok) {
+            torneo.mostrarresultadosfasegrupos();
             torneo.mostrartablagrupos();
 
             // 12 primeros + 12 segundos + 8 mejores terceros = 32 clasificados
@@ -116,6 +117,9 @@ void App::iniciar() {
 
                 // informe final: top4, goleadores, confederaciones dominantes
                 torneo.mostrarinformeestadisticas(repo);
+
+                bool okguardado = torneo.guardarhistoricoactualizado(repo);
+                cout << "actualizacion historica persistente: " << (okguardado ? "ok" : "fallo") << endl;
 
                 // metricas de funcionalidad IV
                 size_t memoriafunc4 = sizeof(repo) + torneo.estimarmemoriaactual();

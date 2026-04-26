@@ -10,32 +10,16 @@ using namespace std;
 Simulador::Simulador() {
 }
 
-// formula del enunciado: lambda = mu * (GF_a / mu)^alpha * (GC_b / mu)^beta
-// basicamente: cuanto mas goles hace A y mas goles recibe B, mas alto el lambda
+// mismo calculo de gol esperado que usa el torneo
+// mas ataque propio y mas fragilidad del rival dan un lambda mas alto
 double Simulador::calcularlambda(double golesfavora, double golescontrab) const {
     double alpha = 0.6;  // el ataque propio pesa mas que la defensa rival
     double beta = 0.4;
     double mu = 1.35;    // promedio historico de goles por partido en mundiales
 
-    double gfa = golesfavora;
-    double gcb = golescontrab;
-
-    // si no tiene datos en el csv uso el promedio mundial como punto de partida
-    if (gfa <= 0.0) {
-        gfa = mu;
-    }
-
-    if (gcb <= 0.0) {
-        gcb = mu;
-    }
-
-    double factorataque = pow(gfa / mu, alpha);
-    double factordefensa = pow(gcb / mu, beta);
+    double factorataque = pow(golesfavora / mu, alpha);
+    double factordefensa = pow(golescontrab / mu, beta);
     double lambda = mu * factorataque * factordefensa;
-
-    if (lambda < 0.2) {
-        lambda = 0.2;  // minimo pa que siempre haya chance de marcar
-    }
 
     return lambda;
 }
