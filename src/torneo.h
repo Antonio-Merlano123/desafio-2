@@ -29,11 +29,15 @@ public:
     bool elegironceinicial(string nombreequipo, jugador once[11]) const;
     bool simularfasegrupos(const Repositorio& repo);
     void clasificargrupos();
+    void armardieciseisavos();
+    bool simularfasesfinales(const Repositorio& repo);
     void mostrargrupos() const;
     void mostrarcalendariogrupos() const;
     void mostraronceprueba() const;
     void mostrartablagrupos() const;
     void mostrarclasificados() const;
+    void mostrardieciseisavos() const;
+    void mostrarfasesfinales() const;
     int getequiposcargados() const;
     int getcantidadjugadores() const;
     int getcantidadgrupos() const;
@@ -60,9 +64,26 @@ private:
     string clasificados1[12];
     string clasificados2[12];
     string clasificados3[8];
+    int grupoindterceros[8];
     int cantclasificados1;
     int cantclasificados2;
     int cantclasificados3;
+
+    partido* partidosdieciseisavos;
+    int cantdieciseisavos;
+    partido* partidosoctavos;
+    int cantoctavos;
+    partido* partidoscuartos;
+    int cantcuartos;
+    partido* partidossemis;
+    int cantsemis;
+    partido partidofinal;
+    partido partidotercero;
+    string equipocampeon;
+    string equiposubcampeon;
+    string equipotercero;
+    string equipocuarto;
+    bool finalessimuladas;
 
     void ordenarporelranking(int indices[], int total) const;
     int buscarhost(int indices[], int total) const;

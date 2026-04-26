@@ -73,6 +73,13 @@ void App::iniciar() {
             torneo.mostrartablagrupos();
             torneo.clasificargrupos();
             torneo.mostrarclasificados();
+            torneo.armardieciseisavos();
+            torneo.mostrardieciseisavos();
+            bool finalok = torneo.simularfasesfinales(repo);
+            cout << "simulacion eliminatorias: " << (finalok ? "ok" : "fallo") << endl;
+            if (finalok) {
+                torneo.mostrarfasesfinales();
+            }
         }
     }
     sim.probar(repo);
