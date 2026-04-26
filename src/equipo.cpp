@@ -1,6 +1,7 @@
 #include "equipo.h"
 
 equipo::equipo() {
+    // valores por defecto por si crean vacio
     nombre = "sin nombre";
     grupo = "A";
     puntos = 0;
@@ -23,6 +24,7 @@ void equipo::sumarpuntos(int valor) {
 }
 
 void equipo::registrargoles(int afavor, int encontra) {
+    // cada registro suma goles y tambien PJ
     golesfavor = golesfavor + afavor;
     golescontra = golescontra + encontra;
     partidosjugados = partidosjugados + 1;

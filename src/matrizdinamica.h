@@ -3,6 +3,7 @@
 
 class matrizdinamica {
 public:
+    // matriz int con bloque lineal interno
     matrizdinamica();
     matrizdinamica(int filasbase, int columnasbase);
     ~matrizdinamica();

@@ -1,6 +1,7 @@
 #include "jugador.h"
 
 jugador::jugador() {
+    // default simple pa objetos temporales
     nombre = "sin nombre";
     equipo = "sin equipo";
     posicion = "delantero";
@@ -105,6 +106,7 @@ void jugador::agregarfalta() {
 }
 
 void jugador::sumarminutos(int minutos) {
+    // no valido negativo aca, lo controla quien llama
     minutosjugados = minutosjugados + minutos;
 }
 

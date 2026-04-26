@@ -7,6 +7,7 @@ using namespace std;
 
 class partido {
 public:
+    // par de equipos + marcador final
     partido();
     partido(string local, string visita);
 

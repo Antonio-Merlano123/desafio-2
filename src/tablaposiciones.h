@@ -7,6 +7,7 @@ using namespace std;
 
 class tablaposiciones {
 public:
+    // fila de tabla para fase de grupos
     tablaposiciones();
 
     void cargarequipo(string nombreequipo);

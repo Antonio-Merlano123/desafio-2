@@ -9,6 +9,7 @@ using namespace std;
 
 class Repositorio {
 public:
+    // lee csv y deja datos base listos
     Repositorio();
     void cargarBase();
 
@@ -25,6 +26,7 @@ public:
     jugador getjugador(int indice) const;
 
 private:
+    // limites del almacenamiento estatico
     static const int maxequipos = 64;
     static const int maxjugadoresporequipo = 15;
     static const int maxjugadores = maxequipos * maxjugadoresporequipo;

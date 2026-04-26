@@ -1,6 +1,7 @@
 #include "arreglodinamico.h"
 
 arreglodinamico::arreglodinamico() {
+    // arranca vacio, se reserva cuando haga falta
     datos = 0;
     cantidad = 0;
     capacidad = 0;
@@ -107,6 +108,6 @@ int arreglodinamico::getcapacidad() const {
 }
 
 void arreglodinamico::limpiar() {
-    // dejo la memoria pero como si estuviera vacio
+    // dejo la memoria reservada pero lo tomo como vacio
     cantidad = 0;
 }

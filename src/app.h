@@ -3,6 +3,7 @@
 
 class App {
 public:
+    // punto de entrada del flujo completo
     App();
     void iniciar();
 };

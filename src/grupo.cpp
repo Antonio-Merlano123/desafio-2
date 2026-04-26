@@ -33,6 +33,7 @@ bool grupo::agregarequipo(string nombreequipo) {
 }
 
 bool grupo::agregarequipo(string nombreequipo, string confederacion) {
+    // maximo 4 por grupo
     if (cantidad >= 4) {
         return false;
     }
@@ -60,6 +61,7 @@ bool grupo::puedeagregarconfederacion(string confederacion) const {
         }
     }
 
+    // regla fifa: uefa hasta 2, resto solo 1
     if (confederacion == "UEFA") {
         return conteo < 2;
     }

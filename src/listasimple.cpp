@@ -6,6 +6,7 @@ listasimple::listasimple() {
 }
 
 listasimple::~listasimple() {
+    // libero nodo por nodo para no dejar fugas
     nodo* actual = cabeza;
 
     while (actual != 0) {
@@ -19,6 +20,7 @@ listasimple::~listasimple() {
 }
 
 void listasimple::agregar(string valor) {
+    // insercion al final (append)
     nodo* nuevo = new nodo(valor);
 
     if (cabeza == 0) {

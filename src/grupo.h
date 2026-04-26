@@ -7,6 +7,7 @@ using namespace std;
 
 class grupo {
 public:
+    // grupo de 4 con regla de confederaciones
     grupo();
     grupo(string nombregrupo);
 
@@ -23,6 +24,7 @@ public:
     void limpiar();
 
 private:
+    // almacenamiento fijo para evitar estructuras externas
     string nombre;
     string equipos[4];
     string confederaciones[4];

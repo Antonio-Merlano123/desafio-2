@@ -17,6 +17,7 @@ partido::partido(string local, string visita) {
 }
 
 void partido::setresultado(int gl, int gv) {
+    // al setear marcador lo marco como jugado
     goleslocal = gl;
     golesvisita = gv;
     jugado = true;

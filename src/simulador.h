@@ -5,6 +5,7 @@
 
 class Simulador {
 public:
+    // modulo de prueba rapida de lambdas/marcador
     Simulador();
     void probar(const Repositorio& repo);
 

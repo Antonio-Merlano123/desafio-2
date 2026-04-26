@@ -6,6 +6,7 @@
 using namespace std;
 
 static string quitarsaltos(string texto) {
+    // limpio \r y \n pa evitar basura al parsear
     string limpio = "";
 
     for (int i = 0; i < int(texto.size()); i = i + 1) {
@@ -26,6 +27,7 @@ static string quitarsaltos(string texto) {
 }
 
 static string quitarlados(string texto) {
+    // trim basico con while, sin librerias extras
     int inicio = 0;
     int fin = int(texto.size());
 
@@ -56,6 +58,7 @@ static string quitarlados(string texto) {
 }
 
 static string normalizarconfederacion(string texto) {
+    // estandarizo nombres que a veces vienen distinto
     string limpio = quitarlados(quitarsaltos(texto));
 
     if (limpio == "UEFA") {
@@ -86,6 +89,7 @@ static string normalizarconfederacion(string texto) {
 }
 
 static int textoaentero(string texto) {
+    // conversion simple, corta al primer char no numerico
     string limpio = quitarlados(texto);
     int inicio = 0;
     int fin = int(limpio.size());
@@ -108,6 +112,7 @@ static int textoaentero(string texto) {
 }
 
 static int partirlinea(string linea, string campos[], int maxcampos) {
+    // separador del csv: punto y coma
     int usados = 0;
     string actual = "";
 
@@ -153,6 +158,7 @@ Repositorio::Repositorio() {
 }
 
 void Repositorio::cargarBase() {
+    //  rutas tipicas de qt
     bool ok = leercsvequipos("../../selecciones_clasificadas_mundial.csv");
 
     if (ok == false) {
@@ -239,6 +245,7 @@ bool Repositorio::leercsvequipos(string ruta) {
             int ganados = textoaentero(campos[7]);
             int empatados = textoaentero(campos[8]);
             int perdidos = textoaentero(campos[9]);
+            // saco promedios historicos de gol por partido
             int partidos = ganados + empatados + perdidos;
 
             if (partidos <= 0) {
@@ -347,6 +354,7 @@ jugador Repositorio::getjugador(int indice) const {
 }
 
 void Repositorio::armarplantillasbase() {
+    // genero 15 jugadores por equipo
     cantidadjugadores = 0;
 
     for (int i = 0; i < cantidadequipos; i = i + 1) {
@@ -430,6 +438,7 @@ void Repositorio::repartirgolesbase(int indiceequipo, int golesbase) {
         return;
     }
 
+    // reparto parejo y lo que sobra se va desde el inicio
     int base = golesbase / cantidad;
     int sobrantes = golesbase % cantidad;
 
@@ -445,6 +454,7 @@ void Repositorio::repartirgolesbase(int indiceequipo, int golesbase) {
         }
     }
 
+    // asistencias base para que no arranquen todos en 0
     for (int i = 0; i < golesbase; i = i + 1) {
         int apoyo = inicio + ((i + 1) % cantidad);
         jugadorescsv[apoyo].agregarasistencia();

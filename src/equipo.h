@@ -7,6 +7,7 @@ using namespace std;
 
 class equipo {
 public:
+    // entidad simple de equipo pa pruebas base
     equipo();
     equipo(string nombreinicial, string grupoinicial);
 
@@ -24,6 +25,7 @@ public:
     void setgrupo(string nuevogrupo);
 
 private:
+    // datos acumulados del equipo
     string nombre;
     string grupo;
     int puntos;

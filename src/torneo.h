@@ -14,6 +14,7 @@ class Repositorio;
 
 class Torneo {
 public:
+    // modulo grande: sorteo, grupos y eliminacion
     Torneo();
     ~Torneo();
 
@@ -38,6 +39,11 @@ public:
     void mostrarclasificados() const;
     void mostrardieciseisavos() const;
     void mostrarfasesfinales() const;
+    void mostrarinformeestadisticas(const Repositorio& repo) const;
+    long long estimariteracionesfuncionalidadII() const;
+    long long estimariteracionesfuncionalidadIII() const;
+    long long estimariteracionesfuncionalidadIV() const;
+    size_t estimarmemoriaactual() const;
     int getequiposcargados() const;
     int getcantidadjugadores() const;
     int getcantidadgrupos() const;
@@ -91,6 +97,8 @@ private:
     int buscarfilatabla(string nombreequipo) const;
     int buscarindiceequiporepo(const Repositorio& repo, string nombreequipo) const;
     int buscarjugadoresdelequipo(string nombreequipo, int indices[], int maxindices) const;
+    bool elegironceindices(string nombreequipo, int onceindices[11]) const;
+    void actualizarestadisticasjugadorespartido(int onceindices[11], int golesafavor, int minutos);
     double calcularlambdapartido(double golesfavora, double golescontrab) const;
     int redondeargolespartido(double lambda) const;
     string resolverganadoreliminacion(const Repositorio& repo, string local, string visita, int& goleslocal, int& golesvisita) const;
@@ -98,6 +106,8 @@ private:
     void barajarbombo(int bombo[], int inicio) const;
     bool intentarsorteo(int bombos[4][12]);
     bool generarcalendarioconlimite(int maxpartidospordia, int descansominimo);
+    int contargolestorneoequipo(string nombreequipo) const;
+    string confederacionconmayorpresencia(const Repositorio& repo, const partido* partidos, int cantidad) const;
 };
 
 #endif // TORNEO_H

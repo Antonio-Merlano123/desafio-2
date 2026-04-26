@@ -7,6 +7,7 @@ using namespace std;
 
 class jugador {
 public:
+    // jugador con stats acumuladas del torneo
     jugador();
     jugador(string nombreinicial, string equipoinicial, string posicioninicial, int camisetainicial);
 
@@ -35,6 +36,7 @@ public:
     void agregarpartido();
 
 private:
+    // info fija + contadores
     string nombre;
     string equipo;
     string posicion;

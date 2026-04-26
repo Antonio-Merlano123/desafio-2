@@ -9,6 +9,7 @@ tablaposiciones::tablaposiciones() {
 }
 
 void tablaposiciones::cargarequipo(string nombreequipo) {
+    // reinicio stats cada vez que arranca una simulacion nueva
     nombre = nombreequipo;
     puntos = 0;
     golesfavor = 0;
@@ -21,6 +22,7 @@ string tablaposiciones::getnombre() const {
 }
 
 void tablaposiciones::sumarganado() {
+    // victoria = 3 puntos
     int puntosactuales = puntos;
     int partidosactuales = partidos;
 
@@ -34,6 +36,7 @@ void tablaposiciones::sumarperdido() {
 }
 
 void tablaposiciones::sumarempate() {
+    // empate = 1 punto
     int puntosactuales = puntos;
     int partidosactuales = partidos;
 

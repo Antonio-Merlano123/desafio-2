@@ -3,6 +3,7 @@
 
 class arreglodinamico {
 public:
+    // arreglo int dinamico hecho a mano
     arreglodinamico();
     arreglodinamico(int capacidadinicial);
     ~arreglodinamico();

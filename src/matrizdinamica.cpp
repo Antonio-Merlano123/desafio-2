@@ -11,7 +11,7 @@ matrizdinamica::matrizdinamica(int filasbase, int columnasbase) {
     filas = 0;
     columnas = 0;
 
-    bool tamanosirve = true;
+    bool tamanosirve = true; // valido medidas antes de reservar
 
     if (filasbase <= 0) {
         tamanosirve = false;
@@ -72,7 +72,7 @@ void matrizdinamica::limpiar() {
     if (datos == 0) {
         return;
     } else {
-        int total = filas * columnas;
+        int total = filas * columnas; // limpio todo a cero
         for (int i = 0; i < total; i = i + 1) {
             datos[i] = 0;
         }
@@ -118,6 +118,7 @@ int matrizdinamica::getvalor(int fila, int columna) const {
 }
 
 int matrizdinamica::calcularindice(int fila, int columna) const {
+    // mapeo 2d -> 1d
     int basefila = fila * columnas;
     return basefila + columna;
 }
