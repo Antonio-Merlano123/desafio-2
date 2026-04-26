@@ -1,8 +1,11 @@
 #include "torneo.h"
 
+#include <cmath>
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+
+#include "repositorio.h"
 
 using namespace std;
 
@@ -55,6 +58,9 @@ Torneo::Torneo() {
     diapartidosgrupos = 0;
     cantidadpartidosgrupos = 0;
     capacidadpartidosgrupos = 0;
+    cantclasificados1 = 0;
+    cantclasificados2 = 0;
+    cantclasificados3 = 0;
 
     srand(unsigned(time(0)));
 }
@@ -336,6 +342,28 @@ int Torneo::buscarindiceequipo(string nombreequipo) const {
     return -1;
 }
 
+int Torneo::buscarfilatabla(string nombreequipo) const {
+    for (int i = 0; i < cantidadfilastabla; i = i + 1) {
+        if (tabla[i].getnombre() == nombreequipo) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+int Torneo::buscarindiceequiporepo(const Repositorio& repo, string nombreequipo) const {
+    int total = repo.getcantidadequipos();
+
+    for (int i = 0; i < total; i = i + 1) {
+        if (repo.getequipo(i) == nombreequipo) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 int Torneo::buscarjugadoresdelequipo(string nombreequipo, int indices[], int maxindices) const {
     if (jugadoresbase == 0) {
         return 0;
@@ -355,6 +383,76 @@ int Torneo::buscarjugadoresdelequipo(string nombreequipo, int indices[], int max
     }
 
     return guardados;
+}
+
+double Torneo::calcularlambdapartido(double golesfavora, double golescontrab) const {
+    double alpha = 0.6;
+    double beta = 0.4;
+    double mu = 1.35;
+
+    double gfa = golesfavora;
+    double gcb = golescontrab;
+
+    if (gfa <= 0.0) {
+        gfa = mu;
+    }
+
+    if (gcb <= 0.0) {
+        gcb = mu;
+    }
+
+    double factorataque = pow(gfa / mu, alpha);
+    double factordefensa = pow(gcb / mu, beta);
+    double lambda = mu * factorataque * factordefensa;
+
+    if (lambda < 0.2) {
+        lambda = 0.2;
+    }
+
+    return lambda;
+}
+
+int Torneo::redondeargolespartido(double lambda) const {
+    int goles = int(lambda + 0.5);
+
+    if (goles < 0) {
+        goles = 0;
+    }
+
+    return goles;
+}
+
+void Torneo::ordenarfilasgrupo(int filas[4]) const {
+    for (int i = 0; i < 4; i = i + 1) {
+        for (int j = i + 1; j < 4; j = j + 1) {
+            int fi = filas[i];
+            int fj = filas[j];
+
+            bool intercambiar = false;
+
+            if (tabla[fj].getpuntos() > tabla[fi].getpuntos()) {
+                intercambiar = true;
+            } else if (tabla[fj].getpuntos() == tabla[fi].getpuntos()) {
+                if (tabla[fj].getdiferencia() > tabla[fi].getdiferencia()) {
+                    intercambiar = true;
+                } else if (tabla[fj].getdiferencia() == tabla[fi].getdiferencia()) {
+                    if (tabla[fj].getgolesfavor() > tabla[fi].getgolesfavor()) {
+                        intercambiar = true;
+                    } else if (tabla[fj].getgolesfavor() == tabla[fi].getgolesfavor()) {
+                        if (tabla[fj].getnombre() < tabla[fi].getnombre()) {
+                            intercambiar = true;
+                        }
+                    }
+                }
+            }
+
+            if (intercambiar) {
+                int temporal = filas[i];
+                filas[i] = filas[j];
+                filas[j] = temporal;
+            }
+        }
+    }
 }
 
 void Torneo::barajarbombo(int bombo[], int inicio) const {
@@ -624,6 +722,66 @@ bool Torneo::generarcalendariogrupos() {
     return generarcalendarioconlimite(5, 2);
 }
 
+bool Torneo::simularfasegrupos(const Repositorio& repo) {
+    if (cantidadpartidosgrupos <= 0) {
+        return false;
+    }
+
+    for (int i = 0; i < cantidadfilastabla; i = i + 1) {
+        string nombre = tabla[i].getnombre();
+        if (nombre != "") {
+            tabla[i].cargarequipo(nombre);
+        }
+    }
+
+    for (int i = 0; i < cantidadpartidosgrupos; i = i + 1) {
+        string local = partidosgrupos[i].getlocal();
+        string visita = partidosgrupos[i].getvisita();
+
+        int ilocalrepo = buscarindiceequiporepo(repo, local);
+        int ivisitarepo = buscarindiceequiporepo(repo, visita);
+        int ilocaltabla = buscarfilatabla(local);
+        int ivisitatabla = buscarfilatabla(visita);
+
+        if (ilocalrepo < 0 || ivisitarepo < 0) {
+            return false;
+        }
+
+        if (ilocaltabla < 0 || ivisitatabla < 0) {
+            return false;
+        }
+
+        double gflocal = repo.getgolesfavorhistorico(ilocalrepo);
+        double gclocal = repo.getgolescontrahistorico(ilocalrepo);
+        double gfvisita = repo.getgolesfavorhistorico(ivisitarepo);
+        double gcvisita = repo.getgolescontrahistorico(ivisitarepo);
+
+        double lambdalocal = calcularlambdapartido(gflocal, gcvisita);
+        double lambdavisita = calcularlambdapartido(gfvisita, gclocal);
+
+        int goleslocal = redondeargolespartido(lambdalocal);
+        int golesvisita = redondeargolespartido(lambdavisita);
+
+        partidosgrupos[i].setresultado(goleslocal, golesvisita);
+
+        tabla[ilocaltabla].sumargoles(goleslocal, golesvisita);
+        tabla[ivisitatabla].sumargoles(golesvisita, goleslocal);
+
+        if (goleslocal > golesvisita) {
+            tabla[ilocaltabla].sumarganado();
+            tabla[ivisitatabla].sumarperdido();
+        } else if (goleslocal < golesvisita) {
+            tabla[ivisitatabla].sumarganado();
+            tabla[ilocaltabla].sumarperdido();
+        } else {
+            tabla[ilocaltabla].sumarempate();
+            tabla[ivisitatabla].sumarempate();
+        }
+    }
+
+    return true;
+}
+
 bool Torneo::elegironceinicial(string nombreequipo, jugador once[11]) const {
     int indices[32];
     int cantidad = buscarjugadoresdelequipo(nombreequipo, indices, 32);
@@ -712,5 +870,139 @@ void Torneo::mostraronceprueba() const {
     for (int i = 0; i < 11; i = i + 1) {
         cout << "    - " << oncevisita[i].getnombre();
         cout << " (" << oncevisita[i].getposicion() << ")" << endl;
+    }
+}
+
+void Torneo::mostrartablagrupos() const {
+    cout << "tabla fase de grupos" << endl;
+
+    for (int g = 0; g < cantidadgrupos; g = g + 1) {
+        int filas[4];
+
+        for (int e = 0; e < 4; e = e + 1) {
+            filas[e] = buscarfilatabla(grupos[g].getequipo(e));
+        }
+
+        bool completo = true;
+        for (int e = 0; e < 4; e = e + 1) {
+            if (filas[e] < 0) {
+                completo = false;
+            }
+        }
+
+        if (completo == false) {
+            continue;
+        }
+
+        ordenarfilasgrupo(filas);
+
+        cout << grupos[g].getnombre() << endl;
+        for (int i = 0; i < 4; i = i + 1) {
+            int f = filas[i];
+            cout << "  " << (i + 1) << ". " << tabla[f].getnombre();
+            cout << " | pts " << tabla[f].getpuntos();
+            cout << " | pj " << tabla[f].getpartidos();
+            cout << " | gf " << tabla[f].getgolesfavor();
+            cout << " | gc " << tabla[f].getgolescontra();
+            cout << " | dif " << tabla[f].getdiferencia() << endl;
+        }
+    }
+}
+
+void Torneo::clasificargrupos() {
+    cantclasificados1 = 0;
+    cantclasificados2 = 0;
+    cantclasificados3 = 0;
+
+    int filasterceros[12];
+    int cantfilasterceros = 0;
+
+    for (int g = 0; g < cantidadgrupos; g = g + 1) {
+        int filas[4];
+        bool completo = true;
+
+        for (int e = 0; e < 4; e = e + 1) {
+            filas[e] = buscarfilatabla(grupos[g].getequipo(e));
+            if (filas[e] < 0) {
+                completo = false;
+            }
+        }
+
+        if (completo == false) {
+            continue;
+        }
+
+        ordenarfilasgrupo(filas);
+
+        if (cantclasificados1 < 12) {
+            clasificados1[cantclasificados1] = tabla[filas[0]].getnombre();
+            cantclasificados1 = cantclasificados1 + 1;
+        }
+
+        if (cantclasificados2 < 12) {
+            clasificados2[cantclasificados2] = tabla[filas[1]].getnombre();
+            cantclasificados2 = cantclasificados2 + 1;
+        }
+
+        if (cantfilasterceros < 12) {
+            filasterceros[cantfilasterceros] = filas[2];
+            cantfilasterceros = cantfilasterceros + 1;
+        }
+    }
+
+    // ordenar terceros por puntos, diferencia, goles favor, nombre
+    for (int i = 0; i < cantfilasterceros; i = i + 1) {
+        for (int j = i + 1; j < cantfilasterceros; j = j + 1) {
+            int fi = filasterceros[i];
+            int fj = filasterceros[j];
+            bool intercambiar = false;
+
+            if (tabla[fj].getpuntos() > tabla[fi].getpuntos()) {
+                intercambiar = true;
+            } else if (tabla[fj].getpuntos() == tabla[fi].getpuntos()) {
+                if (tabla[fj].getdiferencia() > tabla[fi].getdiferencia()) {
+                    intercambiar = true;
+                } else if (tabla[fj].getdiferencia() == tabla[fi].getdiferencia()) {
+                    if (tabla[fj].getgolesfavor() > tabla[fi].getgolesfavor()) {
+                        intercambiar = true;
+                    } else if (tabla[fj].getgolesfavor() == tabla[fi].getgolesfavor()) {
+                        if (tabla[fj].getnombre() < tabla[fi].getnombre()) {
+                            intercambiar = true;
+                        }
+                    }
+                }
+            }
+
+            if (intercambiar) {
+                int temporal = filasterceros[i];
+                filasterceros[i] = filasterceros[j];
+                filasterceros[j] = temporal;
+            }
+        }
+    }
+
+    int limite = cantfilasterceros < 8 ? cantfilasterceros : 8;
+    for (int i = 0; i < limite; i = i + 1) {
+        clasificados3[i] = tabla[filasterceros[i]].getnombre();
+    }
+    cantclasificados3 = limite;
+}
+
+void Torneo::mostrarclasificados() const {
+    cout << "clasificados fase de grupos" << endl;
+
+    cout << "primeros de grupo (12):" << endl;
+    for (int i = 0; i < cantclasificados1; i = i + 1) {
+        cout << "  " << (i + 1) << ". " << clasificados1[i] << endl;
+    }
+
+    cout << "segundos de grupo (12):" << endl;
+    for (int i = 0; i < cantclasificados2; i = i + 1) {
+        cout << "  " << (i + 1) << ". " << clasificados2[i] << endl;
+    }
+
+    cout << "mejores terceros (8):" << endl;
+    for (int i = 0; i < cantclasificados3; i = i + 1) {
+        cout << "  " << (i + 1) << ". " << clasificados3[i] << endl;
     }
 }

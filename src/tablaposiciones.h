@@ -13,6 +13,7 @@ public:
     string getnombre() const;
 
     void sumarganado();
+    void sumarperdido();
     void sumarempate();
     void sumargoles(int afavor, int encontra);
 

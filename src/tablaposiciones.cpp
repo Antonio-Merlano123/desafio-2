@@ -28,6 +28,11 @@ void tablaposiciones::sumarganado() {
     partidos = partidosactuales + 1;
 }
 
+void tablaposiciones::sumarperdido() {
+    int partidosactuales = partidos;
+    partidos = partidosactuales + 1;
+}
+
 void tablaposiciones::sumarempate() {
     int puntosactuales = puntos;
     int partidosactuales = partidos;

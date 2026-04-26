@@ -38,6 +38,7 @@ void App::iniciar() {
 
     bool gruposok = torneo.armargruposporranking();
     bool calendariook = false;
+    bool simgruposok = false;
     if (gruposok) {
         calendariook = torneo.generarcalendariogrupos();
     }
@@ -65,6 +66,14 @@ void App::iniciar() {
     cout << "jugadores base cargados: " << jugadorescargados << endl;
     if (calendariook && jugadorescargados > 0) {
         torneo.mostraronceprueba();
+
+        simgruposok = torneo.simularfasegrupos(repo);
+        cout << "simulacion grupos: " << (simgruposok ? "ok" : "fallo") << endl;
+        if (simgruposok) {
+            torneo.mostrartablagrupos();
+            torneo.clasificargrupos();
+            torneo.mostrarclasificados();
+        }
     }
     sim.probar(repo);
     med.mostrar();

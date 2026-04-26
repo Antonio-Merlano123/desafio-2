@@ -10,6 +10,8 @@
 
 using namespace std;
 
+class Repositorio;
+
 class Torneo {
 public:
     Torneo();
@@ -25,9 +27,13 @@ public:
     bool armargruposporranking();
     bool generarcalendariogrupos();
     bool elegironceinicial(string nombreequipo, jugador once[11]) const;
+    bool simularfasegrupos(const Repositorio& repo);
+    void clasificargrupos();
     void mostrargrupos() const;
     void mostrarcalendariogrupos() const;
     void mostraronceprueba() const;
+    void mostrartablagrupos() const;
+    void mostrarclasificados() const;
     int getequiposcargados() const;
     int getcantidadjugadores() const;
     int getcantidadgrupos() const;
@@ -51,10 +57,22 @@ private:
     int cantidadpartidosgrupos;
     int capacidadpartidosgrupos;
 
+    string clasificados1[12];
+    string clasificados2[12];
+    string clasificados3[8];
+    int cantclasificados1;
+    int cantclasificados2;
+    int cantclasificados3;
+
     void ordenarporelranking(int indices[], int total) const;
     int buscarhost(int indices[], int total) const;
     int buscarindiceequipo(string nombreequipo) const;
+    int buscarfilatabla(string nombreequipo) const;
+    int buscarindiceequiporepo(const Repositorio& repo, string nombreequipo) const;
     int buscarjugadoresdelequipo(string nombreequipo, int indices[], int maxindices) const;
+    double calcularlambdapartido(double golesfavora, double golescontrab) const;
+    int redondeargolespartido(double lambda) const;
+    void ordenarfilasgrupo(int filas[4]) const;
     void barajarbombo(int bombo[], int inicio) const;
     bool intentarsorteo(int bombos[4][12]);
     bool generarcalendarioconlimite(int maxpartidospordia, int descansominimo);
