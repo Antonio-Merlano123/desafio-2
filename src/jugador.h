@@ -2,6 +2,7 @@
 #define JUGADOR_H
 
 #include <string>
+#include <iosfwd>
 
 using namespace std;
 
@@ -34,6 +35,9 @@ public:
     void sumarminutos(int minutos);
     void agregarasistencia();
     void agregarpartido();
+
+    // friend para imprimir un jugador con acceso directo a sus campos privados
+    friend ostream& operator<<(ostream& salida, const jugador& j);
 
 private:
     // info fija + contadores

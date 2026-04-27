@@ -58,6 +58,20 @@ static string dosdigitos(int numero) {
     return texto;
 }
 
+// plantilla simple para limitar cualquier tipo comparable a un rango
+template <typename T>
+static T limitarenrango(T valor, T minimo, T maximo) {
+    if (valor < minimo) {
+        return minimo;
+    }
+
+    if (valor > maximo) {
+        return maximo;
+    }
+
+    return valor;
+}
+
 // arranco todo en 0 para que el destructor no intente liberar punteros basura
 // la semilla basada en la hora hace que cada ejecucion de resultados distintos
 Torneo::Torneo() {
@@ -485,13 +499,7 @@ int Torneo::redondeargolespartido(double lambda) const {
 
     int goles = k - 1;  // el resultado de Poisson es k-1
 
-    if (goles < 0) {
-        goles = 0;
-    }
-
-    if (goles > 6) {
-        goles = 6;  // tope pa no tener marcadores raros tipo 10-0
-    }
+    goles = limitarenrango(goles, 0, 6);  // tope pa no tener marcadores raros tipo 10-0
 
     return goles;
 }
@@ -509,12 +517,7 @@ int Torneo::calcularposesionlocal(int rankinglocal, int rankingvisita) const {
     }
 
     int posesion = int((100.0 * fuerzalocal / total) + 0.5);
-    if (posesion < 30) {
-        posesion = 30;
-    }
-    if (posesion > 70) {
-        posesion = 70;
-    }
+    posesion = limitarenrango(posesion, 30, 70);
     return posesion;
 }
 
@@ -2416,10 +2419,7 @@ void Torneo::mostrarinformeestadisticas(const Repositorio& repo) const {
             continue;
         }
 
-        cout << "  " << (i + 1) << ". "
-             << jugadoresbase[top[i]].getnombre() << " - "
-             << jugadoresbase[top[i]].getequipo() << " ("
-             << jugadoresbase[top[i]].getgoles() << " goles)" << endl;
+        cout << "  " << (i + 1) << ". " << jugadoresbase[top[i]] << endl;
     }
 
     // historial actualizado = goles historicos totales del csv + goles anotados en esta copa

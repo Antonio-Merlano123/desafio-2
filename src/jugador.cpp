@@ -1,5 +1,7 @@
 #include "jugador.h"
 
+#include <ostream>
+
 jugador::jugador() {
     // default simple pa objetos temporales
     nombre = "sin nombre";
@@ -116,4 +118,13 @@ void jugador::agregarasistencia() {
 
 void jugador::agregarpartido() {
     partidos = partidos + 1;
+}
+
+ostream& operator<<(ostream& salida, const jugador& j) {
+    salida << j.nombre
+           << " - " << j.equipo
+           << " (#" << j.camiseta << ", "
+           << j.posicion << ", "
+           << j.goles << " goles)";
+    return salida;
 }
